@@ -1,0 +1,49 @@
+# Build pedido pelo site: o site cria um branch build/<id>-<hora> com mods/<id>/
+# e build-request.json; este workflow compila e grava o resultado em out/<id>/
+# no mesmo branch, que o site lê e baixa (depois o site apaga o branch).
+name: build-on-demand
+on:
+  push:
+    branches: ["build/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Headers do jogo (src.zip)
+        run: unzip -q src.zip
+
+      - name: Toolchain do jogo (llvm-mingw 20260922, clang 23)
+        run: |
+          curl -sSL -o /tmp/lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+          mkdir /tmp/lm && tar -xJf /tmp/lm.tar.xz -C /tmp/lm --strip-components=1
+          echo "/tmp/lm/bin" >> "$GITHUB_PATH"
+
+      - name: Compilar
+        run: |
+          id=$(python3 -c "import json;print(json.load(open('build-request.json'))['id'])")
+          mkdir -p "out/$id"
+          set +e
+          python3 tools/pc/build_mod.py "mods/$id" --target i386 --target x86_64-windows > out/log.txt 2>&1
+          code=$?
+          set -e
+          cat out/log.txt
+          cp -r "mods/$id/." "out/$id/"
+          python3 - "$id" "$code" <<'EOF'
+          import json, sys
+          log = open("out/log.txt", encoding="utf-8", errors="replace").read()[-20000:]
+          json.dump({"id": sys.argv[1], "ok": sys.argv[2] == "0", "log": log}, open("out/result.json", "w"))
+          EOF
+
+      - name: Devolver o resultado ao branch
+        run: |
+          git config user.name "yfm-build"
+          git config user.email "yfm-build@users.noreply.github.com"
+          git add -f out
+          git commit -m "build: resultado"
+          git push
