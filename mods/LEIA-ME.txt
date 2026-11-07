@@ -1,0 +1,1 @@
+Coloque aqui a pasta de cada mod (a que tem o mod.json).
