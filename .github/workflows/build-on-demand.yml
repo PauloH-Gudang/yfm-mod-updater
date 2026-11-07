@@ -1,6 +1,6 @@
 # Build pedido pelo site: o site cria um branch build/<id>-<hora> com mods/<id>/
-# e build-request.json; este workflow compila e grava o resultado em out/<id>/
-# no mesmo branch, que o site lê e baixa (depois o site apaga o branch).
+# e build-request.json; este workflow compila com o SDK do release mais recente do
+# jogo (32 bits, Windows 64 e Android) e grava o resultado em out/<id>/ no mesmo branch.
 name: build-on-demand
 on:
   push:
@@ -15,13 +15,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Headers do jogo (src.zip)
-        run: unzip -q src.zip
-
-      - name: Toolchain do jogo (llvm-mingw 20260922, clang 23)
+      - name: Versão mais recente do jogo
+        id: rel
         run: |
-          curl -sSL -o /tmp/lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
-          mkdir /tmp/lm && tar -xJf /tmp/lm.tar.xz -C /tmp/lm --strip-components=1
+          tag=$(curl -sSL -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled/releases?per_page=1" \
+            | python3 -c "import json,sys;print(json.load(sys.stdin)[0]['tag_name'])")
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Jogo: $tag"
+
+      - name: Cache do compilador e do SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            /tmp/lm
+            /tmp/sdk
+          key: yfm-${{ steps.rel.outputs.tag }}-llvm-mingw-20260922
+
+      - name: Compilador (llvm-mingw 20260922) e SDK do jogo
+        run: |
+          if [ ! -x /tmp/lm/bin/clang ]; then
+            curl -sSL -o /tmp/lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+            mkdir -p /tmp/lm && tar -xJf /tmp/lm.tar.xz -C /tmp/lm --strip-components=1
+          fi
+          if [ ! -f /tmp/sdk/tools/build_mod.py ]; then
+            tag=${{ steps.rel.outputs.tag }}
+            curl -sSL -o /tmp/game.tgz "https://github.com/Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled/releases/download/$tag/yfm-redecomp-$tag-linux.tar.gz"
+            mkdir -p /tmp/game && tar -xzf /tmp/game.tgz -C /tmp/game --strip-components=1
+            mv /tmp/game/sdk /tmp/sdk
+          fi
           echo "/tmp/lm/bin" >> "$GITHUB_PATH"
 
       - name: Compilar
@@ -29,7 +51,8 @@ jobs:
           id=$(python3 -c "import json;print(json.load(open('build-request.json'))['id'])")
           mkdir -p "out/$id"
           set +e
-          python3 tools/pc/build_mod.py "mods/$id" --target i386 --target x86_64-windows > out/log.txt 2>&1
+          echo "SDK do jogo ${{ steps.rel.outputs.tag }}" > out/log.txt
+          python3 /tmp/sdk/tools/build_mod.py "mods/$id" >> out/log.txt 2>&1
           code=$?
           set -e
           cat out/log.txt
