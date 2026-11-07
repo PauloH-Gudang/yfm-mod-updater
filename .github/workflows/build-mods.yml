@@ -16,14 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Headers do jogo (src.zip)
-        run: unzip -q src.zip
-
-      - name: Toolchain do jogo (llvm-mingw 20260922, clang 23)
+      - name: Compilador (llvm-mingw 20260922) e SDK do release mais recente do jogo
         run: |
-          curl -sSL -o lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
-          mkdir lm && tar -xJf lm.tar.xz -C lm --strip-components=1
-          echo "$PWD/lm/bin" >> "$GITHUB_PATH"
+          tag=$(curl -sSL -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled/releases?per_page=1" \
+            | python3 -c "import json,sys;print(json.load(sys.stdin)[0]['tag_name'])")
+          echo "Jogo: $tag"
+          curl -sSL -o /tmp/lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+          mkdir -p /tmp/lm && tar -xJf /tmp/lm.tar.xz -C /tmp/lm --strip-components=1
+          curl -sSL -o /tmp/game.tgz "https://github.com/Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled/releases/download/$tag/yfm-redecomp-$tag-linux.tar.gz"
+          mkdir -p /tmp/game && tar -xzf /tmp/game.tgz -C /tmp/game --strip-components=1
+          mv /tmp/game/sdk /tmp/sdk
+          echo "/tmp/lm/bin" >> "$GITHUB_PATH"
 
       - name: Compilar os mods
         run: |
@@ -35,7 +39,7 @@ jobs:
             name=$(basename "$dir")
             if ls "$dir"*.c >/dev/null 2>&1; then
               echo "::group::$name"
-              python3 tools/pc/build_mod.py "$dir" --target i386 --target x86_64-windows
+              python3 /tmp/sdk/tools/build_mod.py "$dir"
               echo "::endgroup::"
             else
               echo "$name: só dados, nada a compilar"
