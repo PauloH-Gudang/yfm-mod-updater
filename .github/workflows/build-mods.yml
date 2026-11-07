@@ -1,0 +1,66 @@
+# Compila todos os mods da pasta mods/ e publica o site (index.html) no GitHub Pages.
+name: build-mods
+on:
+  push:
+    branches-ignore: ["build/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Headers do jogo (src.zip)
+        run: unzip -q src.zip
+
+      - name: Toolchain do jogo (llvm-mingw 20260922, clang 23)
+        run: |
+          curl -sSL -o lm.tar.xz https://github.com/mstorsjo/llvm-mingw/releases/download/20260922/llvm-mingw-20260922-ucrt-ubuntu-22.04-x86_64.tar.xz
+          mkdir lm && tar -xJf lm.tar.xz -C lm --strip-components=1
+          echo "$PWD/lm/bin" >> "$GITHUB_PATH"
+
+      - name: Compilar os mods
+        run: |
+          mkdir -p out
+          found=0
+          for dir in mods/*/; do
+            [ -f "$dir/mod.json" ] || continue
+            found=1
+            name=$(basename "$dir")
+            if ls "$dir"*.c >/dev/null 2>&1; then
+              echo "::group::$name"
+              python3 tools/pc/build_mod.py "$dir" --target i386 --target x86_64-windows
+              echo "::endgroup::"
+            else
+              echo "$name: só dados, nada a compilar"
+            fi
+            (cd mods && zip -qr "../out/$name.zip" "$name")
+          done
+          [ "$found" = 1 ] || echo "Nenhum mod em mods/. Coloque a pasta do mod lá (com o mod.json)."
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mods-compilados
+          path: out/
+          if-no-files-found: ignore
+
+  pages:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir site && cp index.html site/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
