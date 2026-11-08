@@ -138,24 +138,26 @@ details summary{cursor:pointer;color:var(--gold-hi)}
   const API = "https://yfm-mods.ph-523.workers.dev", G = "mods.html";
   const KEY = "yfmModsSession";
   const get = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
-  const set = v => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  const set = v => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); if (!v) localStorage.removeItem("yfmModsMe"); } catch (e) {} };
+  const getMe = () => { try { return JSON.parse(localStorage.getItem("yfmModsMe")); } catch (e) { return null; } };
+  const setMe = u => { try { localStorage.setItem("yfmModsMe", JSON.stringify(u)); } catch (e) {} };
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const hm = /#session=(.+)$/.exec(location.hash);
   if (hm) { set(hm[1]); history.replaceState(null, "", location.pathname + location.search); }
-  let token = get(), me = null;
+  let token = get(), me = token ? getMe() : null; // usuário guardado: o menu já abre certo, sem piscar
   const draw = () => {
     const n = document.getElementById("nav");
     n.innerHTML = `<a href="${G}#/">Mods</a><a class="on" href="./">Atualizar/compilar mod</a>` + (me
       ? `<a href="${G}#/new">Enviar mod</a><a href="${G}#/my">Meus mods</a>${me.admin ? `<a href="${G}#/admin">Moderação</a>` : ""}
          <span class="meta">${me.avatar ? `<img class="av" src="${esc(me.avatar)}" alt="">` : ""} ${esc(me.name)}</span><button class="sec" id="lo">Sair</button>`
-      : `<button class="discord" id="li">Entrar com Discord</button>`);
+      : token ? "" : `<button class="discord" id="li">Entrar com Discord</button>`);
     const li = document.getElementById("li"), lo = document.getElementById("lo");
     if (li) li.onclick = () => { location.href = API + "/auth/login?return=" + encodeURIComponent(location.href.split("#")[0]); };
     if (lo) lo.onclick = () => { token = null; me = null; set(null); draw(); };
   };
   draw();
   if (token) fetch(API + "/me", { headers: { Authorization: "Bearer " + token } }).then(r => r.json()).then(j => {
-    me = j.user || null; if (!me) { token = null; set(null); } draw();
+    me = j.user || null; if (!me) { token = null; set(null); } else setMe(me); draw();
   }).catch(() => {});
 })();
 </script>
