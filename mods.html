@@ -53,6 +53,10 @@ button,.btn{font:500 16px/1 var(--tx);letter-spacing:.02em;color:#f3ead6;text-de
   padding:11px 20px;border:1px solid var(--lapis-hi);border-radius:3px;background:var(--lapis)}
 button:hover,.btn:hover{background:var(--lapis-hi)}
 button.sec,.btn.sec{background:transparent;color:var(--sand);border-color:var(--gold-dim)}
+button.like{background:transparent;color:var(--sand);border-color:var(--gold-dim);padding:10px 18px}
+button.like:hover{border-color:var(--gold);background:rgba(201,162,78,.08)}
+button.like.on{color:var(--gold-hi);border-color:var(--gold);background:rgba(201,162,78,.14)}
+button.like .h{font-size:18px;margin-right:6px;vertical-align:-1px}
 button.sec:hover,.btn.sec:hover{border-color:var(--gold);background:rgba(201,162,78,.08)}
 button.danger{background:transparent;color:var(--err);border-color:rgba(229,124,106,.5)}
 button:disabled{opacity:.5;cursor:default}
@@ -176,18 +180,21 @@ async function viewList() {
     <span class="box"><span class="n"><span>${esc(m.name)}</span><small>v${esc(m.version)}</small></span>
     <span class="d">${esc(m.description)}</span>
     <span>${pills(m.versions)}</span>
-    <span class="by"><span>${author(m.author)}</span><span>${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
+    <span class="by"><span>${author(m.author)}</span><span>♥ ${m.likes || 0} · ${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
   app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade</h1>
     <p>Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.</p></div>
     <div class="filters"><input id="q" type="search" placeholder="Buscar mod ou autor" aria-label="Buscar mods">
     <select id="fv" aria-label="Versão do jogo"><option value="">Todas as versões do jogo</option>${[...new Set(mods.flatMap(m => m.versions))].sort().reverse().map(v => `<option>${esc(v)}</option>`).join("")}</select>
-    <select id="fs" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="com">Mais comentados</option><option value="name">Nome (A a Z)</option></select></div></div>
+    <select id="fs" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="like">Mais curtidos</option><option value="com">Mais comentados</option><option value="old">Mais antigos</option><option value="name">Nome (A a Z)</option></select></div></div>
     <div class="grid" id="g"></div>`;
   const g = document.getElementById("g"), q = document.getElementById("q"), fv = document.getElementById("fv"), fs = document.getElementById("fs");
   const draw = () => {
     const s = q.value.trim().toLowerCase();
     const list = mods.filter(m => (!s || (m.name + " " + m.description + " " + m.author.name).toLowerCase().includes(s)) && (!fv.value || m.versions.includes(fv.value)));
-    if (fs.value === "com") list.sort((a, b) => b.comments - a.comments);
+    const when = m => m.reviewed || m.created;
+    if (fs.value === "like") list.sort((a, b) => (b.likes || 0) - (a.likes || 0) || when(b) - when(a));
+    else if (fs.value === "com") list.sort((a, b) => b.comments - a.comments || when(b) - when(a));
+    else if (fs.value === "old") list.sort((a, b) => when(a) - when(b));
     else if (fs.value === "name") list.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
     else list.sort((a, b) => (b.reviewed || b.created) - (a.reviewed || a.created));
     g.innerHTML = list.length ? list.map(tile).join("") : `<p class="center" style="grid-column:1/-1">${mods.length ? "Nenhum mod encontrado." : "Nenhum mod aprovado ainda. Entre com o Discord e envie o primeiro."}</p>`;
@@ -210,7 +217,8 @@ async function viewMod(id) {
     <dl class="facts"><dt>Versão</dt><dd>${esc(show.version)}</dd><dt>Autor</dt><dd>${author(m.author)}</dd>
     <dt>Atualizado</dt><dd>${fmtDate(show.reviewed || show.created)}</dd><dt>Funciona em</dt><dd>${pills(show.versions)}</dd></dl>
     <div class="row"><a class="btn dl" href="${esc(show.link)}" target="_blank" rel="noopener noreferrer nofollow">Baixar</a>
-    <small>${esc(new URL(show.link).hostname)}</small></div>
+    <small>${esc(new URL(show.link).hostname)}</small>
+    ${a ? `<button class="like${m.liked ? " on" : ""}" id="like" aria-pressed="${m.liked ? "true" : "false"}" title="${me ? "Curtir" : "Entre com o Discord para curtir"}"><span class="h">${m.liked ? "♥" : "♡"}</span><span id="nlike">${m.likes || 0}</span></button>` : ""}</div>
     ${m.mine ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a><button class="danger" id="del">Apagar mod</button></div>` : ""}
     ${me && me.admin && !m.mine ? `<div class="row" style="margin-top:14px"><button class="danger" id="del">Apagar mod (moderador)</button></div>` : ""}
     </div></div>
@@ -224,6 +232,18 @@ async function viewMod(id) {
   if (del) del.onclick = async () => {
     if (!confirm("Apagar este mod e todos os comentários? Não dá para desfazer.")) return;
     try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = m.mine ? "#/my" : "#/"; } catch (e) { alert(e.message); }
+  };
+  const likeB = document.getElementById("like");
+  if (likeB) likeB.onclick = async () => {
+    if (!me) { if (confirm("Entre com o Discord para curtir. Entrar agora?")) login(); return; }
+    likeB.disabled = true;
+    try {
+      const r = await api(`/mods/${m.id}/like`, { method: m.liked ? "DELETE" : "POST" });
+      m.liked = r.liked; m.likes = r.likes;
+      likeB.classList.toggle("on", r.liked); likeB.setAttribute("aria-pressed", r.liked ? "true" : "false");
+      likeB.querySelector(".h").textContent = r.liked ? "♥" : "♡"; document.getElementById("nlike").textContent = r.likes;
+    } catch (e) { alert(e.message); }
+    likeB.disabled = false;
   };
   if (!a) return;
   const coms = document.getElementById("coms"), corder = document.getElementById("corder");
