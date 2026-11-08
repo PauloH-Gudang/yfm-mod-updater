@@ -114,6 +114,15 @@ label.f{display:block;margin:18px 0 6px;color:var(--sand-dim);font-size:15px}
 .mdbar .pv{margin-left:auto}
 .mdprev{border:1px dashed var(--basalt3);border-radius:3px;padding:10px 12px;margin-top:6px;background:var(--basalt)}
 .mdhelp{font-size:13px;color:var(--sand-dim);margin-top:4px}
+.md .emo{height:1.375em;width:auto;vertical-align:-.3em;margin:0 .05em}
+.md .emo.big{height:3em;vertical-align:middle}
+.emopick{position:relative}
+.emopanel{position:absolute;z-index:20;top:calc(100% + 4px);left:0;width:min(340px,86vw);background:var(--basalt2,#1e1a16);border:1px solid var(--gold-dim);border-radius:4px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.emopanel .g{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:180px;overflow:auto}
+.emopanel .g button{border:0;background:none;font-size:20px;padding:4px 0;min-width:0;line-height:1.2}
+.emopanel .g button:hover{background:var(--basalt3)}
+.emopanel input{width:100%;margin-top:8px;font-size:14px}
+.emopanel small{display:block;margin-top:6px;line-height:1.4}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .msg{padding:12px 16px;border-left:3px solid;border-radius:2px;margin-bottom:20px;background:var(--basalt2)}
 .msg.err{border-color:var(--err)}.msg.ok{border-color:var(--ok)}.msg.warn{border-color:var(--gold)}
@@ -199,9 +208,14 @@ function md(src) {
   t = esc(t).replace(/\r\n?/g, "\n");
   t = t.replace(/```[^\n]*\n?([\s\S]*?)```/g, (_, c) => ph(`<pre><code>${c.replace(/\n$/, "")}</code></pre>`));
   t = t.replace(/`([^`\n]+)`/g, (_, c) => ph(`<code>${c}</code>`));
+  // emoji personalizado do Discord: <:nome:id> ou <a:nome:id> (animado)
+  t = t.replace(/&lt;(a?):([A-Za-z0-9_~]{2,32}):(\d{15,22})&gt;/g, (_, a, n, id) => ph(`<img class="emo" src="https://cdn.discordapp.com/emojis/${id}.${a ? "gif" : "webp"}?size=48&amp;quality=lossless" alt=":${n}:" title=":${n}:" loading="lazy">`));
+
   const link = (u, label) => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${label}</a>`;
   t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, l, u) => ph(link(u, l)));
   t = t.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g, (_, p, u) => p + ph(link(u, u)));
+  // atalhos estilo Discord: :fire: -> 🔥
+  t = t.replace(/:([a-z0-9_+-]{1,32}):/g, (m, n) => EMOJI_CODES[n] || m);
   const inline = x => x
     .replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>")
     .replace(/__([^_\n]+?)__/g, "<u>$1</u>")
@@ -224,8 +238,17 @@ function md(src) {
     flushL(); flushQ(); para.push(line);
   }
   flushP(); flushL(); flushQ();
-  return out.join("").replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
+  let html = out.join("").replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
+  // mensagem só com emojis (até 27): mostra grande, igual ao Discord
+  const bare = html.replace(/^<p>|<\/p>$/g, "");
+  if (/^<p>/.test(html) && !/<\/p><p>|<br>/.test(html)) {
+    const parts = bare.replace(/<img class="emo"[^>]*>/g, "\u0001").replace(/\s+/g, "");
+    const n = (parts.match(/\u0001/g) || []).length + [...parts.replace(/\u0001/g, "").matchAll(/\p{Extended_Pictographic}/gu)].length;
+    if (n && n <= 27 && /^(\u0001|\p{Extended_Pictographic}|\p{Emoji_Modifier}|‍|️|[\u{1F1E6}-\u{1F1FF}])+$/u.test(parts)) html = `<p style="font-size:2.2em;line-height:1.2">${bare.replace(/class="emo"/g, 'class="emo big"')}</p>`;
+  }
+  return html;
 }
+const EMOJI_CODES = {smile:"😄",smiley:"😃",grin:"😁",joy:"😂",rofl:"🤣",sweat_smile:"😅",laughing:"😆",wink:"😉",blush:"😊",heart_eyes:"😍",star_struck:"🤩",kissing_heart:"😘",yum:"😋",stuck_out_tongue:"😛",thinking:"🤔",neutral_face:"😐",expressionless:"😑",unamused:"😒",rolling_eyes:"🙄",smirk:"😏",grimacing:"😬",relieved:"😌",pensive:"😔",sleepy:"😪",sleeping:"😴",mask:"😷",nerd:"🤓",sunglasses:"😎",confused:"😕",worried:"😟",open_mouth:"😮",astonished:"😲",flushed:"😳",pleading_face:"🥺",cry:"😢",sob:"😭",scream:"😱",angry:"😠",rage:"😡",skull:"💀",clown:"🤡",ghost:"👻",alien:"👽",robot:"🤖",poop:"💩",thumbsup:"👍","+1":"👍",thumbsdown:"👎","-1":"👎",ok_hand:"👌",clap:"👏",pray:"🙏",muscle:"💪",wave:"👋",point_up:"☝️",v:"✌️",fingers_crossed:"🤞",raised_hands:"🙌",eyes:"👀",brain:"🧠",heart:"❤️",orange_heart:"🧡",yellow_heart:"💛",green_heart:"💚",blue_heart:"💙",purple_heart:"💜",black_heart:"🖤",broken_heart:"💔",sparkling_heart:"💖",fire:"🔥",star:"⭐",star2:"🌟",sparkles:"✨",zap:"⚡",boom:"💥",100:"💯",tada:"🎉",confetti_ball:"🎊",trophy:"🏆",crown:"👑",gem:"💎",moneybag:"💰",gift:"🎁",video_game:"🎮",joystick:"🕹️",game_die:"🎲",black_joker:"🃏",flower_playing_cards:"🎴",dragon:"🐉",dragon_face:"🐲",snake:"🐍",scorpion:"🦂",spider:"🕷️",eagle:"🦅",cat:"🐱",dog:"🐶",pyramid:"🔺",desert:"🏜️",sunrise:"🌅",crystal_ball:"🔮",scroll:"📜",magic_wand:"🪄",shield:"🛡️",crossed_swords:"⚔️",dagger:"🗡️",bow_and_arrow:"🏹",skull_crossbones:"☠️",warning:"⚠️",check:"✅",white_check_mark:"✅",x:"❌",question:"❓",exclamation:"❗",new:"🆕",up:"🆙",cool:"🆒",lock:"🔒",key:"🔑",link:"🔗",wrench:"🔧",hammer:"🔨",gear:"⚙️",package:"📦",floppy_disk:"💾",computer:"💻",pc:"🖥️",rocket:"🚀",hourglass:"⌛",bulb:"💡",memo:"📝",pushpin:"📌",eye:"👁️",sun:"☀️",moon:"🌙",egypt:"🇪🇬",brazil:"🇧🇷",br:"🇧🇷"};
 // texto sem marcações, para o resumo dos cards
 function plain(src) {
   return String(src ?? "").replace(/```[\s\S]*?```/g, " ").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -237,9 +260,9 @@ function mdTools(id) {
   const bar = document.createElement("div"); bar.className = "mdbar";
   const B = [["<b>B</b>", "Negrito", "**", "**"], ["<i>I</i>", "Itálico", "*", "*"], ["<s>S</s>", "Riscado", "~~", "~~"], ["<u>U</u>", "Sublinhado", "__", "__"],
     ["▒", "Spoiler", "||", "||"], ["&lt;/&gt;", "Código", "`", "`"], ["🔗", "Link", "[", "](https://)"], ["• Lista", "Lista", "- ", ""], ["❝", "Citação", "> ", ""], ["H", "Título", "## ", ""]];
-  bar.innerHTML = B.map((b, i) => `<button type="button" data-i="${i}" title="${b[1]}" aria-label="${b[1]}">${b[0]}</button>`).join("") + `<button type="button" class="pv" aria-pressed="false">Pré-visualizar</button>`;
+  bar.innerHTML = B.map((b, i) => `<button type="button" data-i="${i}" title="${b[1]}" aria-label="${b[1]}">${b[0]}</button>`).join("") + `<span class="emopick"><button type="button" class="emob" title="Emojis" aria-label="Emojis" aria-expanded="false">😀</button></span><button type="button" class="pv" aria-pressed="false">Pré-visualizar</button>`;
   const prev = document.createElement("div"); prev.className = "mdprev md"; prev.hidden = true;
-  const help = document.createElement("div"); help.className = "mdhelp"; help.innerHTML = "Formatação: **negrito**, *itálico*, ~~riscado~~, __sublinhado__, ||spoiler||, `código`, [texto](https://link), linhas com - viram lista, &gt; vira citação, # vira título.";
+  const help = document.createElement("div"); help.className = "mdhelp"; help.innerHTML = "Formatação: **negrito**, *itálico*, ~~riscado~~, __sublinhado__, ||spoiler||, `código`, [texto](https://link), linhas com - viram lista, &gt; vira citação, # vira título. Emojis: 😀 no botão, :fire: ou emoji do Discord &lt;:nome:id&gt;.";
   ta.before(bar); ta.after(help); help.after(prev);
   const wrap = (a, b) => {
     const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e);
@@ -251,6 +274,26 @@ function mdTools(id) {
     ta.focus(); ta.dispatchEvent(new Event("input"));
   };
   bar.querySelectorAll("[data-i]").forEach(btn => btn.onclick = () => { const b = B[+btn.dataset.i]; wrap(b[2], b[3]); });
+  // seletor de emojis: os comuns + campo para colar emoji personalizado do Discord
+  const eb = bar.querySelector(".emob"), holder = bar.querySelector(".emopick");
+  const LIST = "😀😂🤣😅😍🤩😎🤔😏😢😭😱😡💀🤡👻🤖👍👎👏🙏💪👀🔥⭐✨⚡💥💯🎉🏆👑💎🎮🕹️🎲🃏🐉🐍🦂🔺🏜️🔮📜🪄🛡️⚔️🗡️🏹☠️❤️💔✅❌⚠️❓🆕🔧📦💾🚀💡🇧🇷🇪🇬";
+  const insert = s => { const a = ta.selectionStart, e = ta.selectionEnd; ta.setRangeText(s, a, e, "end"); ta.focus(); ta.dispatchEvent(new Event("input")); };
+  let panel = null;
+  const close = () => { if (panel) { panel.remove(); panel = null; eb.setAttribute("aria-expanded", "false"); document.removeEventListener("mousedown", outside); } };
+  const outside = e => { if (panel && !holder.contains(e.target)) close(); };
+  eb.onclick = () => {
+    if (panel) return close();
+    panel = document.createElement("div"); panel.className = "emopanel";
+    const seg = typeof Intl !== "undefined" && Intl.Segmenter ? [...new Intl.Segmenter("pt", { granularity: "grapheme" }).segment(LIST)].map(x => x.segment) : [...LIST];
+    panel.innerHTML = `<div class="g">${seg.map(e => `<button type="button" title="${e}">${e}</button>`).join("")}</div>
+      <input type="text" placeholder="Cole aqui um emoji do Discord: <:nome:123…>" aria-label="Emoji personalizado do Discord">
+      <small>Emoji do Discord: no Discord digite <code>\\:nome_do_emoji:</code> e envie; ele mostra o código <code>&lt;:nome:número&gt;</code>. Copie e cole aqui. Também vale <code>:fire:</code>, <code>:skull:</code>, <code>:dragon:</code>…</small>`;
+    panel.querySelectorAll(".g button").forEach(b => b.onclick = () => { insert(b.textContent); close(); });
+    const inp = panel.querySelector("input");
+    inp.onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); const v = inp.value.trim(); if (/^<a?:[A-Za-z0-9_~]{2,32}:\d{15,22}>$/.test(v)) { insert(v + " "); close(); } else inp.setCustomValidity("Formato: <:nome:número>"), inp.reportValidity(); } else inp.setCustomValidity(""); };
+    holder.appendChild(panel); eb.setAttribute("aria-expanded", "true");
+    setTimeout(() => document.addEventListener("mousedown", outside));
+  };
   const pv = bar.querySelector(".pv");
   const draw = () => { prev.innerHTML = ta.value.trim() ? md(ta.value) : `<span style="color:var(--sand-dim)">Nada para mostrar ainda.</span>`; };
   pv.onclick = () => { prev.hidden = !prev.hidden; pv.setAttribute("aria-pressed", String(!prev.hidden)); pv.textContent = prev.hidden ? "Pré-visualizar" : "Esconder prévia"; draw(); };
