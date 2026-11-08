@@ -121,9 +121,178 @@ details summary{cursor:pointer;color:var(--gold-hi)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:0}
 .stat{background:var(--basalt);border:1px solid var(--basalt3);border-radius:3px;padding:10px 14px}
 .stat b{display:block;font-family:var(--disp);font-weight:400;font-size:24px;color:var(--gold-hi)}
+.langbtn{margin-left:14px;background:transparent;border:1px solid var(--gold,#c9a24a);color:var(--gold,#c9a24a);border-radius:4px;padding:3px 9px;font:inherit;font-size:.85em;cursor:pointer;letter-spacing:.05em}
+.langbtn:hover{background:rgba(201,162,74,.12)}
+.trbtn{display:block;margin:6px 0 0;background:none;border:0;padding:0;color:var(--sand-dim,#999);font:inherit;font-size:.8em;cursor:pointer;text-decoration:underline dotted}
 </style>
 </head>
 <body>
+<script>
+const I18N = {
+"YFM Recompiled — Atualizador de mods 0.3.0 → atual": "YFM Recompiled — Mod updater 0.3.0 → latest",
+"Mods": "Mods", "Meus mods": "My mods", "Enviar mod": "Submit mod", "Moderação": "Moderation", "Sair": "Log out",
+"Atualizar/compilar mod": "Update/compile mod", "Entrar com Discord": "Log in with Discord",
+"Atualizar mod antigo": "Update an old mod",
+"Corrige mods feitos para a": "Fixes mods made for", "(mod API 12) e para a": "(mod API 12) and for",
+", deixando-os prontos para a versão mais atual (mod API 24). A correção roda no seu navegador; só o botão de compilar envia o mod para o servidor de build.": ", making them ready for the latest version (mod API 24). The fixing runs in your browser; only the compile button sends the mod to the build server.",
+"1. Envie o mod": "1. Upload the mod", "Arraste aqui a": "Drag here the", "pasta do mod": "mod folder", "ou o": "or the",
+"(a pasta que contém o": "(the folder that contains", "Escolher pasta": "Choose folder", "Escolher .zip": "Choose .zip",
+"2. Diagnóstico e correções": "2. Diagnosis and fixes", "Ver arquivos corrigidos": "View fixed files",
+"3. Build e download": "3. Build and download", "Baixar mod corrigido (.zip)": "Download fixed mod (.zip)",
+"Compilar agora": "Compile now", "Compilar e baixar": "Compile and download", "lembrar neste navegador": "remember in this browser",
+"O site envia o mod para o seu repositório do atualizador, o GitHub compila e o site baixa os": "The site sends the mod to your updater repository, GitHub compiles it and the site downloads the",
+"prontos. Precisa de um token do GitHub (fine-grained, só esse repositório, permissões": "files. It needs a GitHub token (fine-grained, only that repository, permissions",
+"). O token fica só neste navegador.": "). The token stays only in this browser.", "e": "and",
+"usuario/repositorio": "user/repository",
+"O mod corrigido é compilado no servidor de build e os arquivos .o prontos são baixados. Leva uns 2 minutos.": "The fixed mod is compiled on the build server and the ready .o files are downloaded. It takes about 2 minutes.",
+"Como os arquivos de build são gerados": "How the build files are generated",
+"O navegador não consegue rodar o": "The browser can't run the game's", "do jogo, então o .zip leva junto três formas de compilar, todas usando o": ", so the .zip includes three ways to compile, all using the official",
+"oficial:": ":", "Pelo botão \"Compilar agora\"": "With the \"Compile now\" button",
+"(site aberto pelo GitHub Pages ou pelo index.html no seu PC): tudo automático.": "(site opened from GitHub Pages or from index.html on your PC): fully automatic.",
+"Na nuvem, à mão:": "In the cloud, by hand:", "extraia a pasta do mod em": "extract the mod folder into",
+"do repositório do atualizador e faça push. O workflow compila e devolve, em": "of the updater repository and push. The workflow compiles it and returns, in",
+", o mod com": ", the mod with", "dê dois cliques em": "double-click", "e informe a pasta": "and enter the", "do release do jogo. Ele chama o": "folder of the game release. It calls the SDK's",
+"do SDK, que gera também o": ", which also builds", "(Android).": "(Android).",
+"O que este site corrige": "What this site fixes", "Ver lista": "Show list",
+"BOM, comentarios": "BOM, comments", ", virgulas sobrando, números hex soltos (": ", trailing commas, bare hex numbers (", "vira": "becomes", ") e números com zero à esquerda.": ") and numbers with leading zeros.",
+"Calcula o": "Works out the", "mínimo pelos recursos usados (tabela \"Which game a mod needs\").": "minimum from the features used (\"Which game a mod needs\" table).",
+"Chaves com erro de digitação (": "Misspelled keys (", "em texto.": "written as text.",
+"Mod com": "Mod with", "e sem": "and no", ": adiciona. Remove de": ": adds it. Removes from", "o alvo": "the target", "(Android antigo de memória fixa).": "(old fixed-memory Android).",
+"Código C (para compilar em 64 bits e Android)": "C code (to compile for 64-bit and Android)",
+"Declarações próprias de": "Own declarations of", "(sem isso o x86_64 não compila).": "(without this x86_64 won't compile).",
+"Casts ponteiro↔inteiro (": "Pointer↔integer casts (", ") passam por": ") go through",
+"; headers de sistema proibidos removidos.": "; banned system headers removed.",
+"Avisos (sem mudança automática):": "Warnings (no automatic change):", "com funções GTE (use": "with GTE functions (use", ", entradas novas do host sem checar": ", new host entries without checking",
+"Remove objetos antigos (": "Removes old objects (", "sem thunks,": "without thunks,", "): eles serão recompilados.": "): they'll be recompiled.",
+"Baseado no repositório Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled (notes/modding.md, tools/pc/mod_compat.txt, src/pc/mods/modapi.h).": "Based on the Unchiga/Yu-Gi-Oh-Forbidden-Memories-Recompiled repository (notes/modding.md, tools/pc/mod_compat.txt, src/pc/mods/modapi.h).",
+"Mod": "Mod", "Tipo": "Type", "Só dados": "Data only", "Correções": "Fixes", "Avisos / erros": "Warnings / errors",
+"CORRIGIDO": "FIXED", "AVISO": "WARNING", "ERRO": "ERROR", "Nada a corrigir.": "Nothing to fix.",
+"Código corrigido. Use": "Code fixed. Use", "para receber a pasta": "to get the", "pronta, com as versões para PC 32 bits, Windows 64 bits e Android. Depois copie a pasta para": "folder ready, with builds for 32-bit PC, 64-bit Windows and Android. Then copy the folder to",
+"Mod de dados: o build é o próprio .zip. Extraia a pasta": "Data mod: the build is the .zip itself. Extract the", "em": "folder into", ", reinicie o jogo e ligue em F10 > Game > Mods.": ", restart the game and enable it in F10 > Game > Mods.",
+"Zip inválido.": "Invalid zip.", "Não achei mod.json nessa pasta/zip.": "Couldn't find mod.json in that folder/zip.",
+"Nenhum .c exporta MemoriesModInit.": "No .c exports MemoriesModInit.",
+"O mod tem .o mas não tem os .c: sem o código-fonte não dá para recompilar para 64 bits/Android. Peça o fonte ao autor.": "The mod has .o files but no .c files: without the source code it can't be recompiled for 64-bit/Android. Ask the author for the source.",
+"Mod só de dados: não precisa compilar. O .zip já é o mod pronto.": "Data-only mod: no compiling needed. The .zip is already the finished mod.",
+"Removido \"libraries.aarch64\" (Android antigo de memória fixa; o atual usa aarch64-translated).": "Removed \"libraries.aarch64\" (old fixed-memory Android; the current one uses aarch64-translated).",
+"use D_800E9D90[índice] em vez de indexar D_800E9D98/D_800E9D9C (veja notes/modding.md).": "use D_800E9D90[index] instead of indexing D_800E9D98/D_800E9D9C (see notes/modding.md).",
+"Enviando o mod para o servidor de build…": "Sending the mod to the build server…", "Compilando, leva uns 2 minutos…": "Compiling, takes about 2 minutes…",
+"Branch temporário apagado.": "Temporary branch deleted.", "Preencha usuario/repositorio e o token.": "Fill in user/repository and the token.",
+"o build falhou (log acima).": "the build failed (log above).", "o build não terminou em 20 minutos.": "the build didn't finish in 20 minutes.",
+"o build não terminou em 20 minutos; veja a aba Actions do repositório.": "the build didn't finish in 20 minutes; check the repository's Actions tab.",
+"Failed to fetch": "Couldn't reach the server",
+};
+const I18N_RX_PAGE = [
+  [/^Código C \((\d+) \.c\)$/, "C code ($1 .c)"],
+  [/^"min_api" (.+) → (\d+) \(usa (.+)\)\.$/, '"min_api" $1 → $2 (uses $3).'],
+  [/^"min_api" (.+) cobre o que o mod usa\.$/, '"min_api" $1 covers what the mod uses.'],
+  [/^"(.+)" era texto; virou (.+)\.$/, '"$1" was text; now $2.'],
+  [/^(\d+)× "hand_colour" → "hand_color"\.$/, '$1× "hand_colour" → "hand_color".'],
+  [/^Chave "(.+)" corrigida para "(.+)"\.$/, 'Key "$1" fixed to "$2".'],
+  [/^Chave desconhecida "(.+)" \(o jogo só avisa e ignora\)\.$/, 'Unknown key "$1" (the game only warns and ignores it).'],
+  [/^Mod tem código C mas não tinha "library": adicionado "(.+)"\.$/, 'Mod has C code but no "library": added "$1".'],
+  [/^Adicionado "id": "(.+)" \(nome da pasta\)\.$/, 'Added "id": "$1" (folder name).'],
+  [/^Removidos (\d+) objeto\(s\) compilados antigos \((.+)\): serão gerados de novo no build\.$/, "Removed $1 old compiled object(s) ($2): they'll be built again."],
+  [/^mod\.json não pôde ser lido mesmo após as correções: (.+)$/, "mod.json couldn't be read even after the fixes: $1"],
+  [/^mod\.json: (.+)$/, (_, x) => "mod.json: " + x.replace(/comentário \/\/ removido/g, "// comment removed").replace(/comentário \/\* \*\/ removido/g, "/* */ comment removed").replace(/vírgula sobrando removida/g, "trailing comma removed").replace(/número hex/g, "hex number").replace(/número/g, "number")],
+  [/^(.+): (\d+) cast\(s\) ponteiro↔inteiro passados por uintptr_t(.*)$/, "$1: $2 pointer↔integer cast(s) routed through uintptr_t$3"],
+  [/^(.+): (.*)declaração própria trocada por #include "(.+)"(.*)$/, '$1: $2own declaration replaced by #include "$3"$4'],
+  [/^(.+): (.*)removido #include <(.+)> \(mods compilam sem headers do sistema\)(.*)$/, "$1: $2removed #include <$3> (mods compile without system headers)$4"],
+  [/^(.+): linha (\d+): "long" é 64 bits no arm64; com funções GTE use PSXLONG\.$/, '$1: line $2: "long" is 64 bits on arm64; with GTE functions use PSXLONG.'],
+  [/^(.+): usa host->(\w+) \(API (\d+)\) sem checar host->api; recomendável: (.+)$/, "$1: uses host->$2 (API $3) without checking host->api; recommended: $4"],
+  [/^(.+): (.+) — não existe para mods (.+)$/, "$1: $2 — not available to mods $3"],
+  [/^…ainda compilando \((\d+) s\)$/, "…still compiling ($1 s)"],
+  [/^Pronto: (.*)$/, "Done: $1"], [/^ERRO: (.*)$/, (_, m) => "ERROR: " + tr(m)],
+  [/^Lendo o repositório (.+)$/, "Reading repository $1"], [/^Enviando (.+)$/, "Sending $1"],
+  [/^Build pedido \(branch (.+)$/, "Build requested (branch $1"], [/^Acompanhe em (.+)$/, "Follow it at $1"],
+  [/^Não consegui apagar o branch (.+)$/, "Couldn't delete branch $1"], [/^Método de compressão não suportado em (.+)$/, "Unsupported compression method in $1"],
+];
+
+// ===== idioma (pt / en) =====
+const LOC = () => LANG === "en" ? "en-US" : "pt-BR";
+const LANG = (() => { try { const s = localStorage.getItem("yfmLang"); if (s === "pt" || s === "en") return s; } catch {} return /^pt\b/i.test(navigator.language || "") ? "pt" : "en"; })();
+document.documentElement.lang = LANG === "en" ? "en" : "pt-BR";
+const I18N_RX = [
+  [/^(\d+) comentários?$/, (_, n) => n + (n === "1" ? " comment" : " comments")],
+  [/^Comentários \((\d+)\)$/, "Comments ($1)"],
+  [/^Só cabe mais 1 imagem \(máximo (\d+)\)\.$/, "Only 1 more image fits (max $1)."],
+  [/^Só cabem mais (\d+) imagens \(máximo (\d+)\)\.$/, "Only $1 more images fit (max $2)."],
+  [/^Bloquear (.+)\? Ele não poderá mais enviar mods nem comentar\.$/, "Block $1? They won't be able to submit mods or comment anymore."],
+  [/^apagado em (.+)$/, "deleted on $1"],
+  [/^Banco (\S+)$/, (_, n) => "Database " + (n === "principal" ? "main" : n)],
+  [/^campo "(.+)" é obrigatório$/, 'field "$1" is required'],
+  [/^no máximo (\d+) imagens por mod$/, "at most $1 images per mod"],
+  [/^você já tem (\d+) envios esperando aprovação$/, "you already have $1 submissions waiting for approval"],
+  [/^(.+) tem palavras não permitidas \((.+)\)\. Ajuste o texto e envie de novo\.$/, "$1 contains words that aren't allowed ($2). Fix the text and send again."],
+  [/^resposta inválida do servidor \(HTTP (\d+)\)$/, "invalid server response (HTTP $1)"],
+  [/^Sua última edição foi recusada(.*) Edite e envie de novo\.$/, "Your last edit was rejected$1 Edit it and send again."],
+  [/^Edição:$/, "Edit:"],
+  [/^♥ (\d+) · (\d+) comentários?$/, (_, l, n) => `♥ ${l} · ${n} ${n === "1" ? "comment" : "comments"}`],
+  [/^As imagens dos mods ficam em (\d+) bancos? D1 de (.+?)\. O site grava sempre no primeiro banco abaixo de (\d+)% e passa para o próximo quando ele enche\.$/, (_, n, mb, p) => `Mod images are stored in ${n} D1 ${n === "1" ? "database" : "databases"} of ${mb}. The site always writes to the first database below ${p}% and moves on to the next when it fills up.`],
+  [/^(.+) de (.+) \((.+)%\)$/, "$1 of $2 ($3%)"],
+];
+function tr(s) {
+  if (LANG !== "en" || !s) return s;
+  if (s.includes("\n")) return s.split("\n").map(tr).join("\n");
+  const k = s.trim(); if (!k || !/[A-Za-zÀ-ú]/.test(k)) return s;
+  let v = I18N[k];
+  if (v == null) for (const [r, x] of [...(typeof I18N_RX_PAGE !== "undefined" ? I18N_RX_PAGE : []), ...I18N_RX]) if (r.test(k)) { v = k.replace(r, x); break; }
+  return v == null ? s : s.replace(k, v);
+}
+const I18N_SKIP = "script,style,textarea,code,.md,.d,.notr,.mdprev,input";
+function trNode(root) {
+  if (LANG !== "en") return;
+  if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(I18N_SKIP)) { const v = tr(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; } return; }
+  if (root.nodeType !== 1 || root.closest?.("script,style,.md,.d,.notr")) return;
+  const els = [root, ...root.querySelectorAll("[placeholder],[title],[aria-label]")];
+  for (const el of els) for (const a of ["placeholder", "title", "aria-label"]) if (el.hasAttribute?.(a) && !el.closest(".md,.d,.notr")) { const o = el.getAttribute(a), v = tr(o); if (v !== o) el.setAttribute(a, v); }
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) trNode(n);
+  for (const el of root.matches?.(".md,.d") ? [root] : root.querySelectorAll?.(".desc.md,.t.md,.card .d") || []) autoTranslate(el);
+}
+// tradução automática do texto dos usuários (descrições e comentários)
+const TR_CACHE = new Map();
+async function gtrans(text) {
+  if (TR_CACHE.has(text)) return TR_CACHE.get(text);
+  const p = fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" + encodeURIComponent(text))
+    .then(r => r.json()).then(j => ({ text: (j[0] || []).map(x => x[0]).join(""), from: j[2] }));
+  TR_CACHE.set(text, p); return p;
+}
+async function autoTranslate(el) {
+  if (LANG !== "en" || el.dataset.tr || el.closest(".mdprev")) return;
+  el.dataset.tr = "1";
+  const nodes = []; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) if (/[A-Za-zÀ-ú]{2}/.test(n.nodeValue) && !n.parentElement.closest("code,pre")) nodes.push(n);
+  if (!nodes.length) return;
+  const SEP = "\n⁂\n", orig = nodes.map(n => n.nodeValue);
+  try {
+    const r = await gtrans(orig.join(SEP).slice(0, 4800));
+    if (!r.text || r.from === "en") return;
+    const parts = r.text.split(/\s*⁂\s*/);
+    if (parts.length !== nodes.length) return;
+    nodes.forEach((n, i) => { const lead = orig[i].match(/^\s*/)[0], tail = orig[i].match(/\s*$/)[0]; n.nodeValue = lead + parts[i].trim() + tail; });
+    if (el.matches(".d")) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "trbtn notr"; b.textContent = "Translated · show original";
+    let showing = false; const tnow = nodes.map(n => n.nodeValue);
+    b.onclick = () => { showing = !showing; nodes.forEach((n, i) => n.nodeValue = showing ? orig[i] : tnow[i]); b.textContent = showing ? "Original · show translation" : "Translated · show original"; };
+    el.after(b);
+  } catch {}
+}
+if (LANG === "en") {
+  const _a = window.alert.bind(window), _c = window.confirm.bind(window), _p = window.prompt.bind(window);
+  window.alert = m => _a(tr(String(m))); window.confirm = m => _c(tr(String(m))); window.prompt = (m, d) => _p(tr(String(m)), d);
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === "characterData") trNode(m.target); else if (m.type === "attributes") trNode(m.target); else m.addedNodes.forEach(trNode); } })
+    .observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "aria-label"] });
+  document.addEventListener("DOMContentLoaded", () => { document.title = tr(document.title); trNode(document.body); });
+}
+// botão de idioma no topo
+document.addEventListener("DOMContentLoaded", () => {
+  const bar = document.querySelector("header .bar"); if (!bar) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "langbtn notr";
+  b.textContent = LANG === "en" ? "PT" : "EN"; b.title = LANG === "en" ? "Mudar para português" : "Switch to English";
+  b.onclick = () => { try { localStorage.setItem("yfmLang", LANG === "en" ? "pt" : "en"); } catch {} location.reload(); };
+  bar.appendChild(b);
+});
+</script>
 <header><div class="bar"><a class="logo" href="mods.html">FM <b>Mods</b></a>
 <nav id="nav"><a href="mods.html#/">Mods</a><a class="on" href="./">Atualizar/compilar mod</a></nav></div></header>
 <script>
@@ -173,7 +342,7 @@ details summary{cursor:pointer;color:var(--gold-hi)}
 <div class="grid" id="stats"></div>
 <ul class="log" id="log" style="margin-top:14px"></ul>
 <details style="margin-top:12px"><summary>Ver arquivos corrigidos</summary>
-<div class="row"><select id="fileSel"></select></div><pre id="fileView"></pre></details>
+<div class="row"><select id="fileSel"></select></div><pre id="fileView" class="notr"></pre></details>
 </div>
 
 <div class="card" id="out" hidden>
