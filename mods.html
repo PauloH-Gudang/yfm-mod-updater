@@ -4,57 +4,122 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Mods — FM Recompiled</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f0d0a;--card:#1a1611;--line:#3a3024;--gold:#d8b25a;--txt:#ece4d4;--mut:#a39780;--ok:#7fc47f;--warn:#e0b24a;--err:#e06a5a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,Segoe UI,sans-serif}
-a{color:var(--gold)}
-header{border-bottom:1px solid var(--line);background:#14110d;position:sticky;top:0;z-index:5}
-.bar{max-width:1080px;margin:0 auto;padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-.logo{font-family:Georgia,serif;color:var(--gold);font-size:20px;text-decoration:none;margin-right:auto}
-nav a{text-decoration:none;color:var(--txt);opacity:.85}nav a:hover{opacity:1;color:var(--gold)}
-nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
-main{max-width:1080px;margin:0 auto;padding:22px 18px 60px}
-h1,h2{font-family:Georgia,serif;color:var(--gold);margin:0 0 12px}h1{font-size:26px}h2{font-size:19px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
-button,.btn{background:var(--gold);color:#1a1408;border:0;border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
-button.sec,.btn.sec{background:transparent;color:var(--gold);border:1px solid var(--gold)}
-button.danger{background:transparent;color:var(--err);border:1px solid var(--err)}
+/* Janelas do menu do Forbidden Memories + mods como cartas do jogo */
+:root{
+  --night:#070b1c;      /* fundo, o "campo" escuro */
+  --win1:#24358f; --win2:#0e1748;   /* degradê das janelas de menu */
+  --rim:#c9d6ff;        /* borda clara chanfrada */
+  --ink:#eef1ff; --soft:#a7b5e6;
+  --cursor:#ffe066;     /* amarelo do cursor/seleção do jogo */
+  --frame:#c47a36; --frame-dk:#6b3d17; --parch:#efe2c4; --parch-ink:#2a1d10;
+  --ok:#8be39a; --err:#ff8a7a;
+  --px:"Pixelify Sans",ui-monospace,monospace;
+  --tx:"Atkinson Hyperlegible",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);font:16px/1.55 var(--tx);
+  background:var(--night) repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px)}
+a{color:var(--cursor)}
+::selection{background:var(--cursor);color:#111}
+:focus-visible{outline:2px solid var(--cursor);outline-offset:2px}
+
+/* janela de menu */
+.card,header .bar{background:linear-gradient(180deg,var(--win1),var(--win2));
+  border:2px solid var(--rim);border-radius:3px;
+  box-shadow:0 0 0 2px #050817,inset 0 0 0 2px #0a113a,inset 0 2px 0 3px rgba(255,255,255,.08)}
+.card{padding:18px 20px;margin-bottom:18px}
+
+header{position:sticky;top:0;z-index:5;padding:10px 18px 0;background:linear-gradient(var(--night) 70%,transparent)}
+.bar{max-width:1064px;margin:0 auto;padding:8px 14px;display:flex;gap:6px 18px;align-items:center;flex-wrap:wrap}
+.logo{font-family:var(--px);font-weight:600;font-size:22px;color:var(--ink);text-decoration:none;margin-right:auto;letter-spacing:.5px}
+.logo b{color:var(--cursor);font-weight:600}
+nav{display:flex;gap:4px 16px;align-items:center;flex-wrap:wrap;font-family:var(--px);font-size:17px}
+nav a{color:var(--ink);text-decoration:none;position:relative;padding-left:16px}
+nav a::before{content:"▶";position:absolute;left:0;top:1px;font-size:11px;color:var(--cursor);opacity:0}
+nav a:hover,nav a:focus-visible,nav a.on{color:var(--cursor)}
+nav a:hover::before,nav a:focus-visible::before,nav a.on::before{opacity:1;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){nav a::before{animation:none!important}}
+
+main{max-width:1100px;margin:0 auto;padding:18px 18px 70px}
+h1,h2{font-family:var(--px);font-weight:600;margin:0 0 12px;line-height:1.15}
+h1{font-size:clamp(28px,4.5vw,44px)}
+h2{font-size:22px;color:var(--cursor)}
+
+button,.btn{font-family:var(--px);font-size:17px;color:var(--cursor);text-decoration:none;display:inline-block;cursor:pointer;
+  padding:7px 16px;border:2px solid var(--rim);border-radius:3px;background:linear-gradient(180deg,#3a4fb8,#16207a);
+  box-shadow:0 0 0 2px #050817,inset 0 2px 0 rgba(255,255,255,.15)}
+button:hover,.btn:hover{background:linear-gradient(180deg,#4a62d6,#1d2a96)}
+button:active,.btn:active{transform:translateY(1px)}
+button.sec,.btn.sec{color:var(--ink);background:transparent;box-shadow:none;border-color:var(--soft)}
+button.danger{color:var(--err);background:transparent;box-shadow:none;border-color:var(--err)}
 button:disabled{opacity:.5;cursor:default}
-.discord{background:#5865F2;color:#fff}
-input,textarea,select{width:100%;background:#000;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit}
-textarea{min-height:160px;resize:vertical}
-label.f{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
-.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:var(--txt);display:flex;flex-direction:column}
-.tile:hover{border-color:var(--gold)}
-.tile img{width:100%;aspect-ratio:16/10;object-fit:cover;background:#000;display:block}
-.tile .b{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
-.tile .n{font-weight:700}.tile .d{color:var(--mut);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
-.meta{color:var(--mut);font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:12px;color:var(--txt)}
-.st-pending{color:var(--warn);border-color:var(--warn)}.st-approved{color:var(--ok);border-color:var(--ok)}.st-rejected{color:var(--err);border-color:var(--err)}
-.av{width:22px;height:22px;border-radius:50%;vertical-align:middle;background:#333}
-.hero{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:20px}
+.btn.dl{font-size:21px;padding:9px 26px;color:#1b1400;background:linear-gradient(180deg,#fff0a0,var(--cursor) 55%,#d9b52e);border-color:#fff7cf}
+.btn.dl:hover{background:linear-gradient(180deg,#fff6c4,#ffe885 55%,#e6c23a)}
+.discord{background:#5865F2!important;color:#fff!important;border-color:#c7ccff}
+
+input,textarea,select{width:100%;background:#050a26;color:var(--ink);border:2px solid #4b5fb0;border-radius:2px;padding:9px 10px;font:inherit}
+input:focus,textarea:focus{border-color:var(--cursor);outline:none}
+textarea{min-height:170px;resize:vertical}
+input[type=file]{padding:6px;font-size:14px}
+label.f{display:block;margin:16px 0 5px;font-family:var(--px);font-size:16px;color:var(--soft)}
+
+/* a carta */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:26px 22px;margin-top:22px}
+.tile{display:flex;flex-direction:column;gap:6px;padding:9px;text-decoration:none;color:var(--parch-ink);
+  background:linear-gradient(160deg,#d9914a,var(--frame) 40%,#a35e24);border-radius:7px;
+  border:2px solid var(--frame-dk);box-shadow:0 0 0 2px #1b0f05,0 10px 22px rgba(0,0,0,.45);
+  transition:transform .15s}
+.tile:hover,.tile:focus-visible{transform:translateY(-4px) rotate(-.6deg);outline:none;box-shadow:0 0 0 2px var(--cursor),0 14px 26px rgba(0,0,0,.5)}
+@media (prefers-reduced-motion:reduce){.tile{transition:none}.tile:hover{transform:none}}
+.tile .n{display:flex;justify-content:space-between;gap:8px;align-items:baseline;background:var(--parch);border:2px solid var(--frame-dk);
+  border-radius:2px;padding:3px 7px;font-family:var(--px);font-weight:600;font-size:17px;line-height:1.2}
+.tile .n span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile .n small{font-weight:400;color:#6b4a24;font-size:14px;flex:none}
+.tile .art{border:3px solid var(--frame-dk);background:#000;aspect-ratio:4/3;overflow:hidden}
+.tile .art img{width:100%;height:100%;object-fit:cover;display:block}
+.tile .box{background:var(--parch);border:2px solid var(--frame-dk);border-radius:2px;padding:6px 8px;flex:1;display:flex;flex-direction:column;gap:6px}
+.tile .d{font-size:13.5px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.tile .by{margin-top:auto;display:flex;justify-content:space-between;gap:8px;border-top:1px solid #c9b48a;padding-top:4px;font-size:12.5px;color:#5a3f20}
+.tile .pill{border-color:#a07a45;color:#5a3f20;background:#f7eedb}
+
+.meta{color:var(--soft);font-size:14px;display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-block;border:1px solid #5d72c6;border-radius:2px;padding:0 6px;font-size:12.5px;color:#cfd9ff;margin:0 4px 4px 0}
+.st-pending{color:var(--cursor);border-color:var(--cursor)}.st-approved{color:var(--ok);border-color:var(--ok)}.st-rejected{color:var(--err);border-color:var(--err)}
+.av{width:22px;height:22px;border-radius:2px;vertical-align:-5px;background:#223;margin-right:4px;image-rendering:pixelated}
+
+.hero{display:grid;grid-template-columns:minmax(0,440px) 1fr;gap:26px;align-items:start}
 @media (max-width:760px){.hero{grid-template-columns:1fr}}
-.hero img{width:100%;border-radius:8px;border:1px solid var(--line);background:#000}
-.desc{white-space:pre-wrap;word-wrap:break-word}
+.hero .art{padding:8px;background:linear-gradient(160deg,#d9914a,var(--frame) 40%,#a35e24);border:2px solid var(--frame-dk);border-radius:7px;box-shadow:0 0 0 2px #1b0f05}
+.hero .art img{width:100%;display:block;border:3px solid var(--frame-dk);background:#000}
+.facts{margin:4px 0 16px;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;font-size:15px}
+.facts dt{color:var(--soft)}.facts dd{margin:0}
+.desc{white-space:pre-wrap;word-wrap:break-word;max-width:72ch}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.msg{padding:10px 12px;border-radius:8px;margin-bottom:14px}
-.msg.err{background:#3a1512;border:1px solid var(--err)}.msg.ok{background:#14301a;border:1px solid var(--ok)}.msg.warn{background:#3a2f12;border:1px solid var(--warn)}
-.chk{display:flex;flex-wrap:wrap;gap:8px}.chk label{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer}
-.chk input{width:auto}
-.com{border-top:1px solid var(--line);padding:10px 0}.com:first-child{border-top:0}
-.com .t{white-space:pre-wrap;word-wrap:break-word;margin-top:4px}
-.preview{max-width:320px;border-radius:8px;border:1px solid var(--line);margin-top:8px;display:block}
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.cmp{grid-template-columns:1fr}}
-.cmp img{max-width:100%;border-radius:6px}
-small{color:var(--mut)}
-.center{text-align:center;color:var(--mut);padding:40px 0}
+.msg{padding:10px 14px;border:2px solid;border-radius:3px;margin-bottom:16px;background:#0b1236}
+.msg.err{border-color:var(--err)}.msg.ok{border-color:var(--ok)}.msg.warn{border-color:var(--cursor)}
+.chk{display:flex;flex-wrap:wrap;gap:8px}
+.chk label{display:flex;gap:6px;align-items:center;border:2px solid #4b5fb0;border-radius:2px;padding:3px 9px;cursor:pointer;font-size:14px;background:#050a26}
+.chk label:has(input:checked){border-color:var(--cursor);color:var(--cursor)}
+.chk input{width:auto;accent-color:var(--cursor)}
+.com{border-top:1px dashed #4b5fb0;padding:12px 0}.com:first-child{border-top:0}
+.com .t{white-space:pre-wrap;word-wrap:break-word;margin-top:4px;max-width:72ch}
+.preview{max-width:320px;border:3px solid var(--frame-dk);margin-top:10px;display:block}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px}@media (max-width:760px){.cmp{grid-template-columns:1fr}}
+.cmp img{max-width:100%;border:3px solid var(--frame-dk)}
+small{color:var(--soft)}
+.center{text-align:center;color:var(--soft);padding:48px 0;font-family:var(--px);font-size:18px}
+.top{display:flex;gap:14px 20px;align-items:end;flex-wrap:wrap;justify-content:space-between}
+.top p{margin:0;color:var(--soft);max-width:52ch}
+#q{max-width:320px}
 </style>
 </head>
 <body>
 <header><div class="bar">
-<a class="logo" href="#/">Mods · FM Recompiled</a>
+<a class="logo" href="#/">FM <b>Mods</b></a>
 <nav id="nav"></nav>
 </div></header>
 <main id="app"><p class="center">Carregando…</p></main>
@@ -97,6 +162,7 @@ function logout() { token = null; me = null; store.set(null); renderNav(); locat
 
 function renderNav() {
   const n = document.getElementById("nav");
+  setTimeout(markNav);
   n.innerHTML = `<a href="#/">Mods</a><a href="${UPDATER}">Atualizar/compilar mod</a>` + (me
     ? `<a href="#/new">Enviar mod</a><a href="#/my">Meus mods</a>${me.admin ? `<a href="#/admin">Aprovar</a>` : ""}
        <span class="meta">${author(me)}</span><button class="sec" id="lo">Sair</button>`
@@ -105,22 +171,27 @@ function renderNav() {
   if (li) li.onclick = login; if (lo) lo.onclick = logout;
 }
 
+function markNav(){ const h = location.hash || "#/"; document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === h)); }
+window.addEventListener("hashchange", markNav);
 // ---------- telas ----------
 async function viewList() {
   app.innerHTML = `<p class="center">Carregando mods…</p>`;
   const { mods } = await api("/mods");
-  const tile = m => `<a class="tile" href="#/mod/${m.id}"><img loading="lazy" src="${esc(m.image)}" alt="">
-    <div class="b"><span class="n">${esc(m.name)} <small>v${esc(m.version)}</small></span>
-    <span class="meta">${author(m.author)} · 💬 ${m.comments}</span><span class="d">${esc(m.description)}</span>
-    <span>${pills(m.versions)}</span></div></a>`;
-  app.innerHTML = `<div class="row" style="margin-bottom:14px"><h1 style="margin:0;margin-right:auto">Mods da comunidade</h1>
-    <input id="q" placeholder="Buscar por nome, autor ou descrição…" style="max-width:340px"></div>
+  const tile = m => `<a class="tile" href="#/mod/${m.id}">
+    <span class="n"><span>${esc(m.name)}</span><small>v${esc(m.version)}</small></span>
+    <span class="art"><img loading="lazy" src="${esc(m.image)}" alt=""></span>
+    <span class="box"><span class="d">${esc(m.description)}</span>
+    <span>${pills(m.versions)}</span>
+    <span class="by"><span>por ${esc(m.author.name)}</span><span>${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
+  app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade</h1>
+    <p>Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.</p></div>
+    <input id="q" type="search" placeholder="Buscar mod, autor ou versão" aria-label="Buscar mods"></div>
     <div class="grid" id="g"></div>`;
   const g = document.getElementById("g"), q = document.getElementById("q");
   const draw = () => {
     const s = q.value.trim().toLowerCase();
     const list = mods.filter(m => !s || (m.name + " " + m.description + " " + m.author.name + " " + m.versions.join(" ")).toLowerCase().includes(s));
-    g.innerHTML = list.length ? list.map(tile).join("") : `<p class="center" style="grid-column:1/-1">${mods.length ? "Nenhum mod encontrado." : "Ainda não há mods aprovados. Seja o primeiro a enviar!"}</p>`;
+    g.innerHTML = list.length ? list.map(tile).join("") : `<p class="center" style="grid-column:1/-1">${mods.length ? "Nenhum mod encontrado." : "Nenhum mod aprovado ainda. Entre com o Discord e envie o primeiro."}</p>`;
   };
   q.oninput = draw; draw();
 }
@@ -135,11 +206,11 @@ async function viewMod(id) {
       : l.status === "rejected" ? msg("err", "Sua última edição foi recusada" + (l.reason ? ": " + l.reason : ".") + " Edite e envie de novo.") : "";
   }
   const show = a || l;
-  app.innerHTML = notice + `<div class="card hero"><div><img id="img" alt=""></div><div>
-    <h1>${esc(show.name)}</h1>
-    <div class="meta" style="margin-bottom:10px"><span>Versão <b>${esc(show.version)}</b></span>·<span>${author(m.author)}</span>·<span>${fmtDate(show.reviewed || show.created)}</span>${a ? "" : " " + statusPill(show.status)}</div>
-    <div style="margin-bottom:12px"><small>Compatível com:</small> ${pills(show.versions)}</div>
-    <div class="row"><a class="btn" href="${esc(show.link)}" target="_blank" rel="noopener noreferrer nofollow">Baixar</a>
+  app.innerHTML = notice + `<div class="card hero"><div class="art"><img id="img" alt=""></div><div>
+    <h1>${esc(show.name)}</h1>${a ? "" : statusPill(show.status)}
+    <dl class="facts"><dt>Versão</dt><dd>${esc(show.version)}</dd><dt>Autor</dt><dd>${author(m.author)}</dd>
+    <dt>Atualizado</dt><dd>${fmtDate(show.reviewed || show.created)}</dd><dt>Funciona em</dt><dd>${pills(show.versions)}</dd></dl>
+    <div class="row"><a class="btn dl" href="${esc(show.link)}" target="_blank" rel="noopener noreferrer nofollow">Baixar</a>
     <small>${esc(new URL(show.link).hostname)}</small></div>
     ${m.mine ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a><button class="danger" id="del">Apagar mod</button></div>` : ""}
     ${me && me.admin && !m.mine ? `<div class="row" style="margin-top:14px"><button class="danger" id="del">Apagar mod (moderador)</button></div>` : ""}
@@ -155,7 +226,7 @@ async function viewMod(id) {
   };
   if (!a) return;
   const coms = document.getElementById("coms");
-  coms.innerHTML = m.comments.length ? m.comments.map(c => `<div class="com"><div class="meta">${author(c.user)} · ${fmtDate(c.created)}
+  coms.innerHTML = m.comments.length ? m.comments.map(c => `<div class="com"><div class="meta">${author(c.user)} <span>${fmtDate(c.created)}</span>
     ${c.canDelete ? `<button class="sec" data-del="${c.id}" style="padding:2px 8px;font-size:12px;margin-left:auto">apagar</button>` : ""}</div>
     <div class="t">${esc(c.text)}</div></div>`).join("") : `<p style="color:var(--mut)">Nenhum comentário ainda.</p>`;
   coms.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
@@ -249,9 +320,9 @@ async function viewMy() {
   const { mods } = await api("/my");
   app.innerHTML = `<div class="row" style="margin-bottom:14px"><h1 style="margin:0;margin-right:auto">Meus mods</h1><a class="btn" href="#/new">Enviar mod</a></div>` +
     (mods.length ? mods.map(m => { const s = m.latest || m.approved; return `<div class="card row">
-      <img data-src="${esc(s.image)}" style="width:120px;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:#000" alt="">
+      <img data-src="${esc(s.image)}" style="width:120px;aspect-ratio:4/3;object-fit:cover;border:3px solid var(--frame-dk);background:#000" alt="">
       <div style="flex:1;min-width:200px"><b>${esc(s.name)}</b> <small>v${esc(s.version)}</small><div class="meta">
-      ${m.approved ? statusPill("approved") + (m.latest ? " · edição: " + statusPill(m.latest.status) : "") : statusPill(s.status)}</div>
+      ${m.approved ? statusPill("approved") + (m.latest ? " Edição: " + statusPill(m.latest.status) : "") : statusPill(s.status)}</div>
       ${m.latest && m.latest.status === "rejected" && m.latest.reason ? `<small style="color:var(--err)">Motivo: ${esc(m.latest.reason)}</small>` : ""}</div>
       <a class="btn sec" href="#/mod/${m.id}">Ver</a><a class="btn sec" href="#/edit/${m.id}">Editar</a></div>`; }).join("")
     : `<div class="card center">Você ainda não enviou nenhum mod.</div>`);
@@ -266,7 +337,7 @@ async function viewAdmin() {
     <div>${pills(r.versions)}</div><p><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(r.link)}</a></p>
     <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--mut)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
   app.innerHTML = `<h1>Aprovar envios (${pending.length})</h1>` + (pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
-    <div class="meta" style="margin-bottom:10px">${author(p.author)} · <small>id Discord ${esc(p.author.id)}</small> · ${fmtDate(p.pending.created)} · <a href="#/mod/${p.id}">abrir página</a></div>
+    <div class="meta" style="margin-bottom:10px">${author(p.author)} <small>Discord ${esc(p.author.id)}</small> <span>${fmtDate(p.pending.created)}</span> <a href="#/mod/${p.id}">Abrir página do mod</a></div>
     <div class="cmp">${side(p.pending, "Envio novo")}${side(p.current, "Versão no ar")}</div>
     <div class="row" style="margin-top:12px"><button data-ok>Aprovar</button><input data-reason placeholder="Motivo da recusa (o autor vê)" style="max-width:360px"><button class="danger" data-no>Recusar</button>
     <button class="sec" data-ban style="margin-left:auto">Bloquear autor</button></div></div>`).join("")
