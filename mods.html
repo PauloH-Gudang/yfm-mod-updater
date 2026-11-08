@@ -47,7 +47,7 @@ h2{font-size:24px;color:var(--gold-hi)}
 .card{background:var(--basalt2);border:1px solid var(--basalt3);border-radius:4px;padding:22px 24px;margin-bottom:20px}
 .top{background:none;border:0;padding:0 0 8px;display:flex;gap:16px 28px;align-items:flex-end;flex-wrap:wrap;justify-content:space-between}
 .top p{margin:0;color:var(--sand-dim);max-width:56ch}
-#q{max-width:340px}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.filters input{width:240px}.filters select{width:auto}
 
 button,.btn{font:500 16px/1 var(--tx);letter-spacing:.02em;color:#f3ead6;text-decoration:none;display:inline-block;cursor:pointer;
   padding:11px 20px;border:1px solid var(--lapis-hi);border-radius:3px;background:var(--lapis)}
@@ -105,6 +105,9 @@ label.f{display:block;margin:18px 0 6px;color:var(--sand-dim);font-size:15px}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media (max-width:760px){.cmp{grid-template-columns:1fr}}
 .cmp img{max-width:100%;border:1px solid var(--gold-dim);border-radius:3px}
 small{color:var(--sand-dim)}
+.tabs{display:flex;gap:4px 22px;flex-wrap:wrap;margin:0 0 20px;border-bottom:1px solid var(--basalt3)}
+.tabs a{color:var(--sand-dim);text-decoration:none;padding:6px 0 10px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs a.on,.tabs a:hover{color:var(--sand);border-bottom-color:var(--gold)}
 .center{text-align:center;color:var(--sand-dim);padding:60px 0;font-size:18px}
 </style>
 </head>
@@ -155,14 +158,14 @@ function renderNav() {
   const n = document.getElementById("nav");
   setTimeout(markNav);
   n.innerHTML = `<a href="#/">Mods</a><a href="${UPDATER}">Atualizar/compilar mod</a>` + (me
-    ? `<a href="#/new">Enviar mod</a><a href="#/my">Meus mods</a>${me.admin ? `<a href="#/admin">Aprovar</a>` : ""}
+    ? `<a href="#/new">Enviar mod</a><a href="#/my">Meus mods</a>${me.admin ? `<a href="#/admin">Moderação</a>` : ""}
        <span class="meta">${author(me)}</span><button class="sec" id="lo">Sair</button>`
     : `<button class="discord" id="li">Entrar com Discord</button>`);
   const li = document.getElementById("li"), lo = document.getElementById("lo");
   if (li) li.onclick = login; if (lo) lo.onclick = logout;
 }
 
-function markNav(){ const h = location.hash || "#/"; document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === h)); }
+function markNav(){ const h = location.hash || "#/"; document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === h || (h.startsWith("#/admin") && a.getAttribute("href") === "#/admin"))); }
 window.addEventListener("hashchange", markNav);
 // ---------- telas ----------
 async function viewList() {
@@ -176,15 +179,20 @@ async function viewList() {
     <span class="by"><span>${author(m.author)}</span><span>${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
   app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade</h1>
     <p>Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.</p></div>
-    <input id="q" type="search" placeholder="Buscar mod, autor ou versão" aria-label="Buscar mods"></div>
+    <div class="filters"><input id="q" type="search" placeholder="Buscar mod ou autor" aria-label="Buscar mods">
+    <select id="fv" aria-label="Versão do jogo"><option value="">Todas as versões do jogo</option>${[...new Set(mods.flatMap(m => m.versions))].sort().reverse().map(v => `<option>${esc(v)}</option>`).join("")}</select>
+    <select id="fs" aria-label="Ordenar"><option value="new">Mais recentes</option><option value="com">Mais comentados</option><option value="name">Nome (A a Z)</option></select></div></div>
     <div class="grid" id="g"></div>`;
-  const g = document.getElementById("g"), q = document.getElementById("q");
+  const g = document.getElementById("g"), q = document.getElementById("q"), fv = document.getElementById("fv"), fs = document.getElementById("fs");
   const draw = () => {
     const s = q.value.trim().toLowerCase();
-    const list = mods.filter(m => !s || (m.name + " " + m.description + " " + m.author.name + " " + m.versions.join(" ")).toLowerCase().includes(s));
+    const list = mods.filter(m => (!s || (m.name + " " + m.description + " " + m.author.name).toLowerCase().includes(s)) && (!fv.value || m.versions.includes(fv.value)));
+    if (fs.value === "com") list.sort((a, b) => b.comments - a.comments);
+    else if (fs.value === "name") list.sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    else list.sort((a, b) => (b.reviewed || b.created) - (a.reviewed || a.created));
     g.innerHTML = list.length ? list.map(tile).join("") : `<p class="center" style="grid-column:1/-1">${mods.length ? "Nenhum mod encontrado." : "Nenhum mod aprovado ainda. Entre com o Discord e envie o primeiro."}</p>`;
   };
-  q.oninput = draw; draw();
+  q.oninput = draw; fv.onchange = draw; fs.onchange = draw; draw();
 }
 
 async function viewMod(id) {
@@ -207,7 +215,9 @@ async function viewMod(id) {
     ${me && me.admin && !m.mine ? `<div class="row" style="margin-top:14px"><button class="danger" id="del">Apagar mod (moderador)</button></div>` : ""}
     </div></div>
     <div class="card"><h2>Descrição</h2><div class="desc">${esc(show.description)}</div></div>
-    ${a ? `<div class="card"><h2>Comentários (${m.comments.length})</h2><div id="coms"></div><div id="cform"></div></div>` : ""}`;
+    ${a ? `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Comentários (${m.comments.length})</h2>
+    ${m.comments.length > 1 ? `<select id="corder" aria-label="Ordem dos comentários" style="width:auto"><option value="old">Mais antigos primeiro</option><option value="new">Mais novos primeiro</option></select>` : ""}</div>
+    <div id="coms"></div><div id="cform"></div></div>` : ""}`;
   const img = document.getElementById("img");
   if (a) img.src = a.image; else authImg(img, show.image);
   const del = document.getElementById("del");
@@ -216,14 +226,20 @@ async function viewMod(id) {
     try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = m.mine ? "#/my" : "#/"; } catch (e) { alert(e.message); }
   };
   if (!a) return;
-  const coms = document.getElementById("coms");
-  coms.innerHTML = m.comments.length ? m.comments.map(c => `<div class="com"><div class="meta">${author(c.user)} <span>${fmtDate(c.created)}</span>
-    ${c.canDelete ? `<button class="sec" data-del="${c.id}" style="padding:2px 8px;font-size:12px;margin-left:auto">apagar</button>` : ""}</div>
-    <div class="t">${esc(c.text)}</div></div>`).join("") : `<p style="color:var(--mut)">Nenhum comentário ainda.</p>`;
-  coms.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-    if (!confirm("Apagar este comentário?")) return;
-    try { await api("/comments/" + b.dataset.del, { method: "DELETE" }); viewMod(id); } catch (e) { alert(e.message); }
-  });
+  const coms = document.getElementById("coms"), corder = document.getElementById("corder");
+  try { if (corder) corder.value = localStorage.getItem("yfmComOrder") || "old"; } catch (e) {}
+  const drawComs = () => {
+    const list = corder && corder.value === "new" ? [...m.comments].reverse() : m.comments;
+    coms.innerHTML = list.length ? list.map(c => `<div class="com"><div class="meta">${author(c.user)} <span>${fmtDate(c.created)}</span>
+      ${c.canDelete ? `<button class="sec" data-del="${c.id}" style="padding:3px 10px;font-size:13px;margin-left:auto">Apagar</button>` : ""}</div>
+      <div class="t">${esc(c.text)}</div></div>`).join("") : `<p style="color:var(--sand-dim)">Nenhum comentário ainda.</p>`;
+    coms.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+      if (!confirm("Apagar este comentário?")) return;
+      try { await api("/comments/" + b.dataset.del, { method: "DELETE" }); viewMod(id); } catch (e) { alert(e.message); }
+    });
+  };
+  if (corder) corder.onchange = () => { try { localStorage.setItem("yfmComOrder", corder.value); } catch (e) {} drawComs(); };
+  drawComs();
   const cf = document.getElementById("cform");
   if (!me) { cf.innerHTML = `<div class="row" style="margin-top:10px"><button class="discord" id="li2">Entrar com Discord para comentar</button></div>`; document.getElementById("li2").onclick = login; return; }
   cf.innerHTML = `<label class="f">Seu comentário</label><textarea id="ct" maxlength="1000" style="min-height:80px"></textarea>
@@ -320,23 +336,56 @@ async function viewMy() {
   app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
 }
 
-async function viewAdmin() {
+async function viewAdmin(tab) {
   if (!me || !me.admin) { app.innerHTML = msg("err", "Só moderadores."); return; }
-  app.innerHTML = `<p class="center">Carregando…</p>`;
+  tab = tab || "envios";
+  const tabs = [["envios", "Envios"], ["comentarios", "Comentários"], ["palavras", "Palavras proibidas"]];
+  const head = `<h1>Moderação</h1><div class="tabs" role="tablist">${tabs.map(([k, l]) => `<a role="tab" href="#/admin/${k}" class="${k === tab ? "on" : ""}" aria-selected="${k === tab}">${l}</a>`).join("")}</div>`;
+  app.innerHTML = head + `<p class="center">Carregando…</p>`;
+  const body = c => { app.innerHTML = head + c; };
+  if (tab === "comentarios") {
+    const { comments } = await api("/admin/comments");
+    body(comments.length ? `<div class="card">${comments.map(c => `<div class="com" data-c="${c.id}"><div class="meta">${author(c.user)}${c.user.banned ? ` <span class="pill st-rejected">bloqueado</span>` : ""}
+      <span>em <a href="#/mod/${c.mod.id}">${esc(c.mod.name)}</a></span><span>${fmtDate(c.created)}</span>
+      <span class="row" style="margin-left:auto;gap:6px"><button class="danger" data-del style="padding:3px 10px;font-size:13px">Apagar</button>
+      ${c.user.banned ? "" : `<button class="sec" data-ban style="padding:3px 10px;font-size:13px">Bloquear autor</button>`}</span></div>
+      <div class="t">${esc(c.text)}</div></div>`).join("")}</div>` : `<div class="card center">Nenhum comentário ainda.</div>`);
+    app.querySelectorAll("[data-c]").forEach(el => {
+      const c = comments.find(x => String(x.id) === el.dataset.c);
+      el.querySelector("[data-del]").onclick = async () => { try { await api("/comments/" + c.id, { method: "DELETE" }); el.remove(); } catch (e) { alert(e.message); } };
+      const bb = el.querySelector("[data-ban]");
+      if (bb) bb.onclick = async () => { if (!confirm(`Bloquear ${c.user.name}? Ele não poderá mais enviar mods nem comentar.`)) return; try { await api(`/admin/users/${c.user.id}/ban`, { method: "POST", body: {} }); viewAdmin("comentarios"); } catch (e) { alert(e.message); } };
+    });
+    return;
+  }
+  if (tab === "palavras") {
+    const { words, isDefault } = await api("/admin/words");
+    body(`<div class="card"><p style="margin-top:0;max-width:70ch">Uma palavra ou expressão por linha. Termine com <code>*</code> para pegar qualquer palavra que comece assim (ex.: <code>merd*</code> pega "merda" e "merdinha").
+      Acentos, maiúsculas e trocas como <code>p0rr4</code> são reconhecidos. Nos comentários a palavra vira asteriscos; em nome, versão ou descrição de mod o envio é recusado.</p>
+      ${isDefault ? msg("warn", "Esta é a lista padrão. Ao salvar, ela passa a ser a sua.") : ""}
+      <textarea id="ww" spellcheck="false" style="min-height:320px;font-family:ui-monospace,monospace">${esc(words.join("\n"))}</textarea>
+      <div class="row" style="margin-top:12px"><button id="ws">Salvar lista</button><span id="wr"></span></div></div>`);
+    document.getElementById("ws").onclick = async () => {
+      const r = document.getElementById("wr");
+      try { const j = await api("/admin/words", { method: "PUT", body: { words: document.getElementById("ww").value.split("\n") } }); r.innerHTML = `<span style="color:var(--ok)">Lista salva (${j.words.length} itens).</span>`; }
+      catch (e) { r.innerHTML = `<span style="color:var(--err)">${esc(e.message)}</span>`; }
+    };
+    return;
+  }
   const { pending } = await api("/admin/pending");
   const side = (r, title) => r ? `<div><h2>${title}</h2><img data-src="${esc(r.image)}" alt=""><p><b>${esc(r.name)}</b> v${esc(r.version)}</p>
     <div>${pills(r.versions)}</div><p><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(r.link)}</a></p>
-    <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--mut)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
-  app.innerHTML = `<h1>Aprovar envios (${pending.length})</h1>` + (pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
+    <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--basalt3);border-radius:3px;padding:10px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--sand-dim)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
+  body(pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
     <div class="meta" style="margin-bottom:10px">${author(p.author)} <small>Discord ${esc(p.author.id)}</small> <span>${fmtDate(p.pending.created)}</span> <a href="#/mod/${p.id}">Abrir página do mod</a></div>
     <div class="cmp">${side(p.pending, "Envio novo")}${side(p.current, "Versão no ar")}</div>
-    <div class="row" style="margin-top:12px"><button data-ok>Aprovar</button><input data-reason placeholder="Motivo da recusa (o autor vê)" style="max-width:360px"><button class="danger" data-no>Recusar</button>
+    <div class="row" style="margin-top:14px"><button data-ok>Aprovar</button><input data-reason placeholder="Motivo da recusa (o autor vê)" style="max-width:360px"><button class="danger" data-no>Recusar</button>
     <button class="sec" data-ban style="margin-left:auto">Bloquear autor</button></div></div>`).join("")
     : `<div class="card center">Nada esperando aprovação.</div>`);
   app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
   app.querySelectorAll("[data-rev]").forEach(card => {
     const rev = card.dataset.rev, p = pending.find(x => String(x.pending.rev) === rev);
-    const act = async (path, body) => { card.querySelectorAll("button").forEach(b => b.disabled = true); try { await api(path, { method: "POST", body: body || {} }); viewAdmin(); } catch (e) { alert(e.message); card.querySelectorAll("button").forEach(b => b.disabled = false); } };
+    const act = async (path, b) => { card.querySelectorAll("button").forEach(x => x.disabled = true); try { await api(path, { method: "POST", body: b || {} }); viewAdmin("envios"); } catch (e) { alert(e.message); card.querySelectorAll("button").forEach(x => x.disabled = false); } };
     card.querySelector("[data-ok]").onclick = () => act(`/admin/revisions/${rev}/approve`);
     card.querySelector("[data-no]").onclick = () => act(`/admin/revisions/${rev}/reject`, { reason: card.querySelector("[data-reason]").value });
     card.querySelector("[data-ban]").onclick = () => { if (confirm(`Bloquear ${p.author.name}? Ele não poderá mais enviar mods nem comentar.`)) act(`/admin/users/${p.author.id}/ban`); };
@@ -356,7 +405,7 @@ async function route() {
     else if (p[0] === "new") await viewForm(null);
     else if (p[0] === "edit" && p[1]) await viewForm(p[1]);
     else if (p[0] === "my") await viewMy();
-    else if (p[0] === "admin") await viewAdmin();
+    else if (p[0] === "admin") await viewAdmin(p[1]);
     else await viewList();
   } catch (e) { app.innerHTML = msg("err", e.message) + `<p><a href="#/">Voltar para os mods</a></p>`; }
 }
