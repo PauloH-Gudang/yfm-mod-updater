@@ -149,7 +149,9 @@ const fmtDate = t => t ? new Date(t).toLocaleDateString("pt-BR", {day:"2-digit",
 const STATUS = {pending:"Aguardando aprovação", approved:"Aprovado", rejected:"Recusado"};
 const store = {
   get(){ try{ return localStorage.getItem("yfmModsSession"); }catch(e){ return null; } },
-  set(v){ try{ v ? localStorage.setItem("yfmModsSession", v) : localStorage.removeItem("yfmModsSession"); }catch(e){} }
+  set(v){ try{ v ? localStorage.setItem("yfmModsSession", v) : localStorage.removeItem("yfmModsSession"); if (!v) localStorage.removeItem("yfmModsMe"); }catch(e){} },
+  getMe(){ try{ return JSON.parse(localStorage.getItem("yfmModsMe")); }catch(e){ return null; } },
+  setMe(u){ try{ u ? localStorage.setItem("yfmModsMe", JSON.stringify(u)) : localStorage.removeItem("yfmModsMe"); }catch(e){} }
 };
 
 async function api(path, opt = {}) {
@@ -180,7 +182,7 @@ function renderNav() {
   n.innerHTML = `<a href="#/">Mods</a><a href="${UPDATER}">Atualizar/compilar mod</a>` + (me
     ? `<a href="#/new">Enviar mod</a><a href="#/my">Meus mods</a>${me.admin ? `<a href="#/admin">Moderação</a>` : ""}
        <span class="meta">${author(me)}</span><button class="sec" id="lo">Sair</button>`
-    : `<button class="discord" id="li">Entrar com Discord</button>`);
+    : token ? "" : `<button class="discord" id="li">Entrar com Discord</button>`);
   const li = document.getElementById("li"), lo = document.getElementById("lo");
   if (li) li.onclick = login; if (lo) lo.onclick = logout;
 }
@@ -535,7 +537,9 @@ async function route() {
   const hm = /^#session=(.+)$/.exec(location.hash);
   token = hm ? hm[1] : store.get();
   if (hm) { store.set(token); history.replaceState(null, "", location.pathname + "#/"); }
-  if (token) { try { me = (await api("/me")).user; if (!me) { token = null; store.set(null); } } catch (e) { me = null; } }
+  // desenha o menu na hora com o usuário guardado; depois confirma com o servidor
+  if (token) { me = store.getMe(); renderNav(); }
+  if (token) { try { me = (await api("/me")).user; if (!me) { token = null; store.set(null); } else store.setMe(me); } catch (e) { me = me || null; } }
   renderNav();
   window.addEventListener("hashchange", route);
   route();
