@@ -106,6 +106,21 @@ label.f{display:block;margin:18px 0 6px;color:var(--sand-dim);font-size:15px}
 .com{border-top:1px solid var(--basalt3);padding:14px 0}.com:first-child{border-top:0}
 .com .t{white-space:pre-wrap;word-wrap:break-word;margin-top:4px;max-width:70ch}
 .preview{max-width:340px;border:1px solid var(--gold-dim);border-radius:3px;margin-top:10px;display:block}
+.drop{border:1px dashed var(--gold-dim);border-radius:4px;padding:18px;text-align:center;color:var(--sand-dim);cursor:pointer;background:var(--basalt);transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--gold-hi);background:rgba(201,162,78,.08);color:var(--sand)}
+.drop b{color:var(--gold-hi);font-weight:600}
+.thumbs{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px}
+.thumb{position:relative;width:150px}
+.thumb img{width:150px;aspect-ratio:16/10;object-fit:cover;display:block;border:1px solid var(--gold-dim);border-radius:3px;background:#000}
+.thumb .tag{position:absolute;left:6px;top:6px;background:var(--gold);color:var(--basalt);font-size:12px;font-weight:700;padding:1px 7px;border-radius:999px}
+.thumb .acts{display:flex;gap:4px;margin-top:5px}
+.thumb .acts button{padding:4px 0;flex:1;font-size:14px;background:transparent;color:var(--sand);border-color:var(--basalt3)}
+.thumb .acts button:hover{border-color:var(--gold)}
+.thumb .acts button:disabled{opacity:.35;cursor:default}
+.gal{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.gal button{padding:0;border:2px solid transparent;border-radius:3px;background:none;width:76px;line-height:0}
+.gal button.on{border-color:var(--gold-hi)}
+.gal img{width:72px;aspect-ratio:16/10;object-fit:cover;border-radius:2px;background:#000}
 .cmp{display:grid;grid-template-columns:1fr 1fr;gap:20px}@media (max-width:760px){.cmp{grid-template-columns:1fr}}
 .cmp img{max-width:100%;border:1px solid var(--gold-dim);border-radius:3px}
 small{color:var(--sand-dim)}
@@ -150,6 +165,7 @@ async function authImg(el, url) {
   if (!url) return;
   try { const r = await fetch(url, { headers: token ? {Authorization: "Bearer " + token} : {} }); if (r.ok) el.src = URL.createObjectURL(await r.blob()); } catch (e) {}
 }
+const MAX_IMGS = 4;
 function msg(kind, text) { return `<div class="msg ${kind}">${esc(text)}</div>`; }
 function author(a) { return a ? `${a.avatar ? `<img class="av" src="${esc(a.avatar)}" alt="">` : ""} ${esc(a.name)}` : ""; }
 function pills(vs) { return (vs || []).map(v => `<span class="pill">${esc(v)}</span>`).join(" "); }
@@ -212,7 +228,7 @@ async function viewMod(id) {
       : l.status === "rejected" ? msg("err", "Sua última edição foi recusada" + (l.reason ? ": " + l.reason : ".") + " Edite e envie de novo.") : "";
   }
   const show = a || l;
-  app.innerHTML = notice + `<div class="card hero"><div class="art"><img id="img" alt=""></div><div>
+  app.innerHTML = notice + `<div class="card hero"><div class="art"><img id="img" alt="">${(show.images || []).length > 1 ? `<div class="gal" id="gal">${show.images.map((u, i) => `<button type="button" data-i="${i}" class="${i ? "" : "on"}" aria-label="Imagem ${i + 1}"><img data-g="${esc(u)}" alt=""></button>`).join("")}</div>` : ""}</div><div>
     <h1>${esc(show.name)}</h1>${a ? "" : statusPill(show.status)}
     <dl class="facts"><dt>Versão</dt><dd>${esc(show.version)}</dd><dt>Autor</dt><dd>${author(m.author)}</dd>
     <dt>Atualizado</dt><dd>${fmtDate(show.reviewed || show.created)}</dd><dt>Funciona em</dt><dd>${pills(show.versions)}</dd></dl>
@@ -227,7 +243,16 @@ async function viewMod(id) {
     ${m.comments.length > 1 ? `<select id="corder" aria-label="Ordem dos comentários" style="width:auto"><option value="old">Mais antigos primeiro</option><option value="new">Mais novos primeiro</option></select>` : ""}</div>
     <div id="coms"></div><div id="cform"></div></div>` : ""}`;
   const img = document.getElementById("img");
-  if (a) img.src = a.image; else authImg(img, show.image);
+  const setImg = (el, u) => { if (a) el.src = u; else authImg(el, u); };
+  setImg(img, show.image);
+  const gal = document.getElementById("gal");
+  if (gal) {
+    gal.querySelectorAll("img[data-g]").forEach(t => setImg(t, t.dataset.g));
+    gal.querySelectorAll("button").forEach(b => b.onclick = () => {
+      gal.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      const t = b.querySelector("img"); if (t.src) img.src = t.src; else setImg(img, show.images[+b.dataset.i]);
+    });
+  }
   const del = document.getElementById("del");
   if (del) del.onclick = async () => {
     if (!confirm("Apagar este mod e todos os comentários? Não dá para desfazer.")) return;
@@ -274,14 +299,14 @@ async function viewMod(id) {
 
 async function loadImage(file) {
   if (!/^image\//.test(file.type)) throw new Error("escolha um arquivo de imagem");
-  if (file.type === "image/gif" && file.size <= 1000000) return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
+  if (file.type === "image/gif" && file.size <= 1000000 && !(await createImageBitmap(file).then(b => b.width > 1280 || b.height > 1280).catch(() => false))) return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
   const bmp = await createImageBitmap(file);
   const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
   c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
-  for (const q of [0.85, 0.7, 0.55]) {
+  for (const q of [0.85, 0.75, 0.6, 0.45]) {
     const url = c.toDataURL("image/webp", q);
-    if (url.length * 0.75 < 950000) return url.startsWith("data:image/webp") ? url : c.toDataURL("image/jpeg", q);
+    if (url.length * 0.75 < 400000) return url.startsWith("data:image/webp") ? url : c.toDataURL("image/jpeg", q);
   }
   throw new Error("imagem grande demais mesmo reduzida; use uma menor");
 }
@@ -297,8 +322,10 @@ async function viewForm(editId) {
   app.innerHTML = `<h1>${editId ? "Editar mod" : "Enviar mod"}</h1>
     ${editId ? msg("warn", "A edição vai para aprovação de novo. Enquanto isso, todos continuam vendo a versão aprovada.") : msg("warn", "Seu mod só aparece para todos depois que o moderador aprovar.")}
     <div class="card"><form id="f">
-    <label class="f">Imagem (PNG, JPG, WEBP ou GIF; é reduzida automaticamente)</label>
-    <input type="file" id="fimg" accept="image/*"><img id="prev" class="preview" alt="" ${cur ? "" : "hidden"}>
+    <label class="f">Imagens (até ${MAX_IMGS}; a primeira é a capa. PNG, JPG, WEBP ou GIF, reduzidas automaticamente)</label>
+    <div class="drop" id="drop" tabindex="0" role="button"><b>Arraste imagens para cá</b>, cole com <b>Ctrl+V</b> ou clique para escolher</div>
+    <input type="file" id="fimg" accept="image/*" multiple hidden>
+    <div class="thumbs" id="thumbs"></div><div id="imgerr" style="color:var(--err);margin-top:6px"></div>
     <label class="f">Nome do mod</label><input id="fname" maxlength="80" required value="${esc(cur?.name)}">
     <label class="f">Versão do mod</label><input id="fver" maxlength="30" required placeholder="1.0" value="${esc(cur?.version)}">
     <label class="f">Descrição</label><textarea id="fdesc" maxlength="5000" required>${esc(cur?.description)}</textarea>
@@ -309,14 +336,45 @@ async function viewForm(editId) {
     <input id="flink" type="url" required placeholder="https://" value="${esc(cur?.link)}">
     <div class="row" style="margin-top:16px"><button id="fsend">${editId ? "Enviar edição para aprovação" : "Enviar para aprovação"}</button><span id="ferr"></span></div>
     </form></div>`;
-  let image = null;
-  const prev = document.getElementById("prev");
-  if (cur) authImg(prev, cur.image);
-  document.getElementById("fimg").onchange = async e => {
-    const f = e.target.files[0]; if (!f) return;
-    try { image = await loadImage(f); prev.src = image; prev.hidden = false; document.getElementById("ferr").textContent = ""; }
-    catch (err) { image = null; document.getElementById("ferr").innerHTML = `<span style="color:var(--err)">${esc(err.message)}</span>`; }
+  // cada item: { val: data URL nova ou endereço de imagem que o mod já tinha }
+  const imgs = (cur ? (cur.images && cur.images.length ? cur.images : [cur.image]) : []).filter(Boolean).map(u => ({ val: u, old: true }));
+  const thumbs = document.getElementById("thumbs"), imgerr = document.getElementById("imgerr"), fimg = document.getElementById("fimg"), drop = document.getElementById("drop");
+  const drawThumbs = () => {
+    thumbs.innerHTML = imgs.map((it, i) => `<div class="thumb"><img data-i="${i}" alt="">${i ? "" : `<span class="tag">Capa</span>`}
+      <div class="acts"><button type="button" data-l="${i}" ${i ? "" : "disabled"} aria-label="Mover para a esquerda">◀</button><button type="button" data-r="${i}" ${i < imgs.length - 1 ? "" : "disabled"} aria-label="Mover para a direita">▶</button><button type="button" data-x="${i}" aria-label="Remover">✕</button></div></div>`).join("");
+    thumbs.querySelectorAll("img[data-i]").forEach(el => { const it = imgs[+el.dataset.i]; if (it.old) authImg(el, it.val); else el.src = it.val; });
+    const mv = (i, j) => { [imgs[i], imgs[j]] = [imgs[j], imgs[i]]; drawThumbs(); };
+    thumbs.querySelectorAll("[data-l]").forEach(b => b.onclick = () => mv(+b.dataset.l, +b.dataset.l - 1));
+    thumbs.querySelectorAll("[data-r]").forEach(b => b.onclick = () => mv(+b.dataset.r, +b.dataset.r + 1));
+    thumbs.querySelectorAll("[data-x]").forEach(b => b.onclick = () => { imgs.splice(+b.dataset.x, 1); drawThumbs(); });
+    drop.style.display = imgs.length >= MAX_IMGS ? "none" : "";
   };
+  const addFiles = async files => {
+    files = [...files].filter(f => /^image\//.test(f.type));
+    if (!files.length) { imgerr.textContent = "Nenhuma imagem encontrada."; return; }
+    imgerr.textContent = "";
+    const room = MAX_IMGS - imgs.length;
+    if (files.length > room) imgerr.textContent = `Só cabem mais ${room} ${room === 1 ? "imagem" : "imagens"} (máximo ${MAX_IMGS}).`;
+    for (const f of files.slice(0, Math.max(0, room))) {
+      try { imgs.push({ val: await loadImage(f) }); drawThumbs(); }
+      catch (err) { imgerr.textContent = (f.name ? f.name + ": " : "") + err.message; }
+    }
+  };
+  drop.onclick = () => fimg.click();
+  drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fimg.click(); } };
+  fimg.onchange = () => { addFiles(fimg.files); fimg.value = ""; };
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = () => drop.classList.remove("over");
+  drop.ondrop = e => { e.preventDefault(); e.stopPropagation(); drop.classList.remove("over"); addFiles(e.dataTransfer.files); };
+  // soltar fora da caixa também funciona, em vez de o navegador abrir a imagem
+  document.ondragover = e => { if (e.dataTransfer && [...e.dataTransfer.types].includes("Files")) e.preventDefault(); };
+  document.ondrop = e => { if (e.dataTransfer && e.dataTransfer.files.length) { e.preventDefault(); addFiles(e.dataTransfer.files); } };
+  document.onpaste = e => {
+    const files = [...(e.clipboardData ? e.clipboardData.files : [])].filter(f => /^image\//.test(f.type));
+    if (!files.length) return; // texto normal cola normalmente
+    e.preventDefault(); addFiles(files);
+  };
+  drawThumbs();
   document.getElementById("fadd").onclick = () => {
     const v = document.getElementById("fother").value.trim(); if (!v) return;
     const box = document.getElementById("fvers");
@@ -329,9 +387,9 @@ async function viewForm(editId) {
     const body = {
       name: document.getElementById("fname").value, version: document.getElementById("fver").value,
       description: document.getElementById("fdesc").value, link: document.getElementById("flink").value,
-      versions: [...document.querySelectorAll("#fvers input:checked")].map(i => i.value), image,
+      versions: [...document.querySelectorAll("#fvers input:checked")].map(i => i.value), images: imgs.map(i => i.val),
     };
-    if (!editId && !image) { err.innerHTML = `<span style="color:var(--err)">Escolha uma imagem.</span>`; return; }
+    if (!imgs.length) { err.innerHTML = `<span style="color:var(--err)">Adicione ao menos uma imagem.</span>`; return; }
     if (!body.versions.length) { err.innerHTML = `<span style="color:var(--err)">Marque ao menos uma versão compatível.</span>`; return; }
     btn.disabled = true; err.textContent = "Enviando…";
     try {
@@ -393,7 +451,7 @@ async function viewAdmin(tab) {
     return;
   }
   const { pending } = await api("/admin/pending");
-  const side = (r, title) => r ? `<div><h2>${title}</h2><img data-src="${esc(r.image)}" alt=""><p><b>${esc(r.name)}</b> v${esc(r.version)}</p>
+  const side = (r, title) => r ? `<div><h2>${title}</h2><img data-src="${esc(r.image)}" alt="">${(r.images || []).length > 1 ? `<div class="gal">${r.images.slice(1).map(u => `<img data-src="${esc(u)}" alt="" style="width:110px">`).join("")}</div>` : ""}<p><b>${esc(r.name)}</b> v${esc(r.version)}</p>
     <div>${pills(r.versions)}</div><p><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(r.link)}</a></p>
     <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--basalt3);border-radius:3px;padding:10px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--sand-dim)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
   body(pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
@@ -419,6 +477,7 @@ async function route() {
   if (h === "#login-cancelado") history.replaceState(null, "", location.pathname + "#/");
   const p = (location.hash.replace(/^#/, "") || "/").split("/").filter(Boolean);
   window.scrollTo(0, 0);
+  document.onpaste = document.ondrop = document.ondragover = null;
   try {
     if (!p.length) await viewList();
     else if (p[0] === "mod" && p[1]) await viewMod(p[1]);
