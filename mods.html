@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mods — FM Recompiled</title>
+<style>
+:root{--bg:#0f0d0a;--card:#1a1611;--line:#3a3024;--gold:#d8b25a;--txt:#ece4d4;--mut:#a39780;--ok:#7fc47f;--warn:#e0b24a;--err:#e06a5a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+a{color:var(--gold)}
+header{border-bottom:1px solid var(--line);background:#14110d;position:sticky;top:0;z-index:5}
+.bar{max-width:1080px;margin:0 auto;padding:10px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.logo{font-family:Georgia,serif;color:var(--gold);font-size:20px;text-decoration:none;margin-right:auto}
+nav a{text-decoration:none;color:var(--txt);opacity:.85}nav a:hover{opacity:1;color:var(--gold)}
+nav{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+main{max-width:1080px;margin:0 auto;padding:22px 18px 60px}
+h1,h2{font-family:Georgia,serif;color:var(--gold);margin:0 0 12px}h1{font-size:26px}h2{font-size:19px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px}
+button,.btn{background:var(--gold);color:#1a1408;border:0;border-radius:7px;padding:8px 14px;font-weight:600;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
+button.sec,.btn.sec{background:transparent;color:var(--gold);border:1px solid var(--gold)}
+button.danger{background:transparent;color:var(--err);border:1px solid var(--err)}
+button:disabled{opacity:.5;cursor:default}
+.discord{background:#5865F2;color:#fff}
+input,textarea,select{width:100%;background:#000;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px;font:inherit}
+textarea{min-height:160px;resize:vertical}
+label.f{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:var(--txt);display:flex;flex-direction:column}
+.tile:hover{border-color:var(--gold)}
+.tile img{width:100%;aspect-ratio:16/10;object-fit:cover;background:#000;display:block}
+.tile .b{padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.tile .n{font-weight:700}.tile .d{color:var(--mut);font-size:13px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.meta{color:var(--mut);font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:12px;color:var(--txt)}
+.st-pending{color:var(--warn);border-color:var(--warn)}.st-approved{color:var(--ok);border-color:var(--ok)}.st-rejected{color:var(--err);border-color:var(--err)}
+.av{width:22px;height:22px;border-radius:50%;vertical-align:middle;background:#333}
+.hero{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:20px}
+@media (max-width:760px){.hero{grid-template-columns:1fr}}
+.hero img{width:100%;border-radius:8px;border:1px solid var(--line);background:#000}
+.desc{white-space:pre-wrap;word-wrap:break-word}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.msg{padding:10px 12px;border-radius:8px;margin-bottom:14px}
+.msg.err{background:#3a1512;border:1px solid var(--err)}.msg.ok{background:#14301a;border:1px solid var(--ok)}.msg.warn{background:#3a2f12;border:1px solid var(--warn)}
+.chk{display:flex;flex-wrap:wrap;gap:8px}.chk label{display:flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:6px;padding:4px 8px;cursor:pointer}
+.chk input{width:auto}
+.com{border-top:1px solid var(--line);padding:10px 0}.com:first-child{border-top:0}
+.com .t{white-space:pre-wrap;word-wrap:break-word;margin-top:4px}
+.preview{max-width:320px;border-radius:8px;border:1px solid var(--line);margin-top:8px;display:block}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media (max-width:760px){.cmp{grid-template-columns:1fr}}
+.cmp img{max-width:100%;border-radius:6px}
+small{color:var(--mut)}
+.center{text-align:center;color:var(--mut);padding:40px 0}
+</style>
+</head>
+<body>
+<header><div class="bar">
+<a class="logo" href="#/">Mods · FM Recompiled</a>
+<nav id="nav"></nav>
+</div></header>
+<main id="app"><p class="center">Carregando…</p></main>
+<script>
+"use strict";
+// Endereço do servidor de mods (Cloudflare Worker yfm-mods).
+const API = "https://yfm-mods.ph-523.workers.dev";
+const UPDATER = "./";
+
+let me = null, token = null, versionsCache = null;
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtDate = t => t ? new Date(t).toLocaleDateString("pt-BR", {day:"2-digit", month:"short", year:"numeric"}) : "";
+const STATUS = {pending:"Aguardando aprovação", approved:"Aprovado", rejected:"Recusado"};
+const store = {
+  get(){ try{ return localStorage.getItem("yfmModsSession"); }catch(e){ return null; } },
+  set(v){ try{ v ? localStorage.setItem("yfmModsSession", v) : localStorage.removeItem("yfmModsSession"); }catch(e){} }
+};
+
+async function api(path, opt = {}) {
+  const headers = { ...(opt.body ? {"Content-Type":"application/json"} : {}), ...(token ? {Authorization: "Bearer " + token} : {}) };
+  const r = await fetch(API + path, { ...opt, headers, body: opt.body ? JSON.stringify(opt.body) : undefined });
+  const j = await r.json().catch(() => ({ error: "resposta inválida do servidor (HTTP " + r.status + ")" }));
+  if (r.status === 401 && token) { token = null; store.set(null); me = null; renderNav(); }
+  if (!r.ok || j.error) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+// imagens de envios não aprovados precisam do login: carrega como blob
+async function authImg(el, url) {
+  if (!url) return;
+  try { const r = await fetch(url, { headers: token ? {Authorization: "Bearer " + token} : {} }); if (r.ok) el.src = URL.createObjectURL(await r.blob()); } catch (e) {}
+}
+function msg(kind, text) { return `<div class="msg ${kind}">${esc(text)}</div>`; }
+function author(a) { return a ? `${a.avatar ? `<img class="av" src="${esc(a.avatar)}" alt="">` : ""} ${esc(a.name)}` : ""; }
+function pills(vs) { return (vs || []).map(v => `<span class="pill">${esc(v)}</span>`).join(" "); }
+function statusPill(s) { return `<span class="pill st-${esc(s)}">${esc(STATUS[s] || s)}</span>`; }
+
+function login() { location.href = API + "/auth/login?return=" + encodeURIComponent(location.href.split("#")[0] + "#/"); }
+function logout() { token = null; me = null; store.set(null); renderNav(); location.hash = "#/"; }
+
+function renderNav() {
+  const n = document.getElementById("nav");
+  n.innerHTML = `<a href="#/">Mods</a><a href="${UPDATER}">Atualizar/compilar mod</a>` + (me
+    ? `<a href="#/new">Enviar mod</a><a href="#/my">Meus mods</a>${me.admin ? `<a href="#/admin">Aprovar</a>` : ""}
+       <span class="meta">${author(me)}</span><button class="sec" id="lo">Sair</button>`
+    : `<button class="discord" id="li">Entrar com Discord</button>`);
+  const li = document.getElementById("li"), lo = document.getElementById("lo");
+  if (li) li.onclick = login; if (lo) lo.onclick = logout;
+}
+
+// ---------- telas ----------
+async function viewList() {
+  app.innerHTML = `<p class="center">Carregando mods…</p>`;
+  const { mods } = await api("/mods");
+  const tile = m => `<a class="tile" href="#/mod/${m.id}"><img loading="lazy" src="${esc(m.image)}" alt="">
+    <div class="b"><span class="n">${esc(m.name)} <small>v${esc(m.version)}</small></span>
+    <span class="meta">${author(m.author)} · 💬 ${m.comments}</span><span class="d">${esc(m.description)}</span>
+    <span>${pills(m.versions)}</span></div></a>`;
+  app.innerHTML = `<div class="row" style="margin-bottom:14px"><h1 style="margin:0;margin-right:auto">Mods da comunidade</h1>
+    <input id="q" placeholder="Buscar por nome, autor ou descrição…" style="max-width:340px"></div>
+    <div class="grid" id="g"></div>`;
+  const g = document.getElementById("g"), q = document.getElementById("q");
+  const draw = () => {
+    const s = q.value.trim().toLowerCase();
+    const list = mods.filter(m => !s || (m.name + " " + m.description + " " + m.author.name + " " + m.versions.join(" ")).toLowerCase().includes(s));
+    g.innerHTML = list.length ? list.map(tile).join("") : `<p class="center" style="grid-column:1/-1">${mods.length ? "Nenhum mod encontrado." : "Ainda não há mods aprovados. Seja o primeiro a enviar!"}</p>`;
+  };
+  q.oninput = draw; draw();
+}
+
+async function viewMod(id) {
+  app.innerHTML = `<p class="center">Carregando…</p>`;
+  const m = await api("/mods/" + id);
+  const a = m.approved, l = m.latest;
+  let notice = "";
+  if (m.mine && l) {
+    notice = l.status === "pending" ? msg("warn", a ? "Sua edição está aguardando aprovação. Até lá, todos veem a versão aprovada abaixo." : "Seu mod está aguardando aprovação. Só você e o moderador conseguem vê-lo.")
+      : l.status === "rejected" ? msg("err", "Sua última edição foi recusada" + (l.reason ? ": " + l.reason : ".") + " Edite e envie de novo.") : "";
+  }
+  const show = a || l;
+  app.innerHTML = notice + `<div class="card hero"><div><img id="img" alt=""></div><div>
+    <h1>${esc(show.name)}</h1>
+    <div class="meta" style="margin-bottom:10px"><span>Versão <b>${esc(show.version)}</b></span>·<span>${author(m.author)}</span>·<span>${fmtDate(show.reviewed || show.created)}</span>${a ? "" : " " + statusPill(show.status)}</div>
+    <div style="margin-bottom:12px"><small>Compatível com:</small> ${pills(show.versions)}</div>
+    <div class="row"><a class="btn" href="${esc(show.link)}" target="_blank" rel="noopener noreferrer nofollow">Baixar</a>
+    <small>${esc(new URL(show.link).hostname)}</small></div>
+    ${m.mine ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a><button class="danger" id="del">Apagar mod</button></div>` : ""}
+    ${me && me.admin && !m.mine ? `<div class="row" style="margin-top:14px"><button class="danger" id="del">Apagar mod (moderador)</button></div>` : ""}
+    </div></div>
+    <div class="card"><h2>Descrição</h2><div class="desc">${esc(show.description)}</div></div>
+    ${a ? `<div class="card"><h2>Comentários (${m.comments.length})</h2><div id="coms"></div><div id="cform"></div></div>` : ""}`;
+  const img = document.getElementById("img");
+  if (a) img.src = a.image; else authImg(img, show.image);
+  const del = document.getElementById("del");
+  if (del) del.onclick = async () => {
+    if (!confirm("Apagar este mod e todos os comentários? Não dá para desfazer.")) return;
+    try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = m.mine ? "#/my" : "#/"; } catch (e) { alert(e.message); }
+  };
+  if (!a) return;
+  const coms = document.getElementById("coms");
+  coms.innerHTML = m.comments.length ? m.comments.map(c => `<div class="com"><div class="meta">${author(c.user)} · ${fmtDate(c.created)}
+    ${c.canDelete ? `<button class="sec" data-del="${c.id}" style="padding:2px 8px;font-size:12px;margin-left:auto">apagar</button>` : ""}</div>
+    <div class="t">${esc(c.text)}</div></div>`).join("") : `<p style="color:var(--mut)">Nenhum comentário ainda.</p>`;
+  coms.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm("Apagar este comentário?")) return;
+    try { await api("/comments/" + b.dataset.del, { method: "DELETE" }); viewMod(id); } catch (e) { alert(e.message); }
+  });
+  const cf = document.getElementById("cform");
+  if (!me) { cf.innerHTML = `<div class="row" style="margin-top:10px"><button class="discord" id="li2">Entrar com Discord para comentar</button></div>`; document.getElementById("li2").onclick = login; return; }
+  cf.innerHTML = `<label class="f">Seu comentário</label><textarea id="ct" maxlength="1000" style="min-height:80px"></textarea>
+    <div class="row" style="margin-top:8px"><button id="cs">Comentar</button><span id="ce"></span></div>`;
+  document.getElementById("cs").onclick = async () => {
+    const t = document.getElementById("ct").value.trim(); if (!t) return;
+    const b = document.getElementById("cs"); b.disabled = true;
+    try { await api(`/mods/${m.id}/comments`, { method: "POST", body: { text: t } }); viewMod(id); }
+    catch (e) { document.getElementById("ce").innerHTML = `<span style="color:var(--err)">${esc(e.message)}</span>`; b.disabled = false; }
+  };
+}
+
+async function loadImage(file) {
+  if (!/^image\//.test(file.type)) throw new Error("escolha um arquivo de imagem");
+  if (file.type === "image/gif" && file.size <= 1000000) return await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(file); });
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 1280 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  for (const q of [0.85, 0.7, 0.55]) {
+    const url = c.toDataURL("image/webp", q);
+    if (url.length * 0.75 < 950000) return url.startsWith("data:image/webp") ? url : c.toDataURL("image/jpeg", q);
+  }
+  throw new Error("imagem grande demais mesmo reduzida; use uma menor");
+}
+
+async function viewForm(editId) {
+  if (!me) { app.innerHTML = `<div class="card center"><p>Entre com o Discord para enviar um mod.</p><button class="discord" id="li3">Entrar com Discord</button></div>`; document.getElementById("li3").onclick = login; return; }
+  app.innerHTML = `<p class="center">Carregando…</p>`;
+  let cur = null;
+  if (editId) { const m = await api("/mods/" + editId); if (!m.mine) { app.innerHTML = msg("err", "Só o autor pode editar este mod."); return; } cur = m.latest && m.latest.status === "pending" ? m.latest : (m.latest && m.latest.status === "rejected" ? m.latest : m.approved); }
+  if (!versionsCache) versionsCache = (await api("/versions").catch(() => ({ versions: [] }))).versions;
+  const chosen = new Set(cur ? cur.versions : []);
+  const allV = [...new Set([...versionsCache, ...chosen])];
+  app.innerHTML = `<h1>${editId ? "Editar mod" : "Enviar mod"}</h1>
+    ${editId ? msg("warn", "A edição vai para aprovação de novo. Enquanto isso, todos continuam vendo a versão aprovada.") : msg("warn", "Seu mod só aparece para todos depois que o moderador aprovar.")}
+    <div class="card"><form id="f">
+    <label class="f">Imagem (PNG, JPG, WEBP ou GIF; é reduzida automaticamente)</label>
+    <input type="file" id="fimg" accept="image/*"><img id="prev" class="preview" alt="" ${cur ? "" : "hidden"}>
+    <label class="f">Nome do mod</label><input id="fname" maxlength="80" required value="${esc(cur?.name)}">
+    <label class="f">Versão do mod</label><input id="fver" maxlength="30" required placeholder="1.0" value="${esc(cur?.version)}">
+    <label class="f">Descrição</label><textarea id="fdesc" maxlength="5000" required>${esc(cur?.description)}</textarea>
+    <label class="f">Versões do jogo compatíveis (marque uma ou mais)</label>
+    <div class="chk" id="fvers">${allV.map(v => `<label><input type="checkbox" value="${esc(v)}" ${chosen.has(v) ? "checked" : ""}> ${esc(v)}</label>`).join("")}</div>
+    <div class="row" style="margin-top:6px"><input id="fother" placeholder="Outra versão (ex.: v0.3.2)" style="max-width:240px"><button type="button" class="sec" id="fadd">Adicionar</button></div>
+    <label class="f">Link de download (https://… — Google Drive, Mega, MediaFire, GitHub, etc.)</label>
+    <input id="flink" type="url" required placeholder="https://" value="${esc(cur?.link)}">
+    <div class="row" style="margin-top:16px"><button id="fsend">${editId ? "Enviar edição para aprovação" : "Enviar para aprovação"}</button><span id="ferr"></span></div>
+    </form></div>`;
+  let image = null;
+  const prev = document.getElementById("prev");
+  if (cur) authImg(prev, cur.image);
+  document.getElementById("fimg").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try { image = await loadImage(f); prev.src = image; prev.hidden = false; document.getElementById("ferr").textContent = ""; }
+    catch (err) { image = null; document.getElementById("ferr").innerHTML = `<span style="color:var(--err)">${esc(err.message)}</span>`; }
+  };
+  document.getElementById("fadd").onclick = () => {
+    const v = document.getElementById("fother").value.trim(); if (!v) return;
+    const box = document.getElementById("fvers");
+    if (![...box.querySelectorAll("input")].some(i => i.value === v)) box.insertAdjacentHTML("beforeend", `<label><input type="checkbox" value="${esc(v)}" checked> ${esc(v)}</label>`);
+    document.getElementById("fother").value = "";
+  };
+  document.getElementById("f").onsubmit = async e => {
+    e.preventDefault();
+    const err = document.getElementById("ferr"), btn = document.getElementById("fsend");
+    const body = {
+      name: document.getElementById("fname").value, version: document.getElementById("fver").value,
+      description: document.getElementById("fdesc").value, link: document.getElementById("flink").value,
+      versions: [...document.querySelectorAll("#fvers input:checked")].map(i => i.value), image,
+    };
+    if (!editId && !image) { err.innerHTML = `<span style="color:var(--err)">Escolha uma imagem.</span>`; return; }
+    if (!body.versions.length) { err.innerHTML = `<span style="color:var(--err)">Marque ao menos uma versão compatível.</span>`; return; }
+    btn.disabled = true; err.textContent = "Enviando…";
+    try {
+      const r = editId ? await api("/mods/" + editId, { method: "PUT", body }) : await api("/mods", { method: "POST", body });
+      location.hash = "#/mod/" + r.id;
+    } catch (ex) { err.innerHTML = `<span style="color:var(--err)">${esc(ex.message)}</span>`; btn.disabled = false; }
+  };
+}
+
+async function viewMy() {
+  if (!me) { login(); return; }
+  app.innerHTML = `<p class="center">Carregando…</p>`;
+  const { mods } = await api("/my");
+  app.innerHTML = `<div class="row" style="margin-bottom:14px"><h1 style="margin:0;margin-right:auto">Meus mods</h1><a class="btn" href="#/new">Enviar mod</a></div>` +
+    (mods.length ? mods.map(m => { const s = m.latest || m.approved; return `<div class="card row">
+      <img data-src="${esc(s.image)}" style="width:120px;aspect-ratio:16/10;object-fit:cover;border-radius:6px;background:#000" alt="">
+      <div style="flex:1;min-width:200px"><b>${esc(s.name)}</b> <small>v${esc(s.version)}</small><div class="meta">
+      ${m.approved ? statusPill("approved") + (m.latest ? " · edição: " + statusPill(m.latest.status) : "") : statusPill(s.status)}</div>
+      ${m.latest && m.latest.status === "rejected" && m.latest.reason ? `<small style="color:var(--err)">Motivo: ${esc(m.latest.reason)}</small>` : ""}</div>
+      <a class="btn sec" href="#/mod/${m.id}">Ver</a><a class="btn sec" href="#/edit/${m.id}">Editar</a></div>`; }).join("")
+    : `<div class="card center">Você ainda não enviou nenhum mod.</div>`);
+  app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
+}
+
+async function viewAdmin() {
+  if (!me || !me.admin) { app.innerHTML = msg("err", "Só moderadores."); return; }
+  app.innerHTML = `<p class="center">Carregando…</p>`;
+  const { pending } = await api("/admin/pending");
+  const side = (r, title) => r ? `<div><h2>${title}</h2><img data-src="${esc(r.image)}" alt=""><p><b>${esc(r.name)}</b> v${esc(r.version)}</p>
+    <div>${pills(r.versions)}</div><p><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(r.link)}</a></p>
+    <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:8px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--mut)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
+  app.innerHTML = `<h1>Aprovar envios (${pending.length})</h1>` + (pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
+    <div class="meta" style="margin-bottom:10px">${author(p.author)} · <small>id Discord ${esc(p.author.id)}</small> · ${fmtDate(p.pending.created)} · <a href="#/mod/${p.id}">abrir página</a></div>
+    <div class="cmp">${side(p.pending, "Envio novo")}${side(p.current, "Versão no ar")}</div>
+    <div class="row" style="margin-top:12px"><button data-ok>Aprovar</button><input data-reason placeholder="Motivo da recusa (o autor vê)" style="max-width:360px"><button class="danger" data-no>Recusar</button>
+    <button class="sec" data-ban style="margin-left:auto">Bloquear autor</button></div></div>`).join("")
+    : `<div class="card center">Nada esperando aprovação.</div>`);
+  app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
+  app.querySelectorAll("[data-rev]").forEach(card => {
+    const rev = card.dataset.rev, p = pending.find(x => String(x.pending.rev) === rev);
+    const act = async (path, body) => { card.querySelectorAll("button").forEach(b => b.disabled = true); try { await api(path, { method: "POST", body: body || {} }); viewAdmin(); } catch (e) { alert(e.message); card.querySelectorAll("button").forEach(b => b.disabled = false); } };
+    card.querySelector("[data-ok]").onclick = () => act(`/admin/revisions/${rev}/approve`);
+    card.querySelector("[data-no]").onclick = () => act(`/admin/revisions/${rev}/reject`, { reason: card.querySelector("[data-reason]").value });
+    card.querySelector("[data-ban]").onclick = () => { if (confirm(`Bloquear ${p.author.name}? Ele não poderá mais enviar mods nem comentar.`)) act(`/admin/users/${p.author.id}/ban`); };
+  });
+}
+
+async function route() {
+  const h = location.hash;
+  const m = /^#session=(.+)$/.exec(h);
+  if (m) { token = m[1]; store.set(token); history.replaceState(null, "", location.pathname + "#/"); }
+  if (h === "#login-cancelado") history.replaceState(null, "", location.pathname + "#/");
+  const p = (location.hash.replace(/^#/, "") || "/").split("/").filter(Boolean);
+  window.scrollTo(0, 0);
+  try {
+    if (!p.length) await viewList();
+    else if (p[0] === "mod" && p[1]) await viewMod(p[1]);
+    else if (p[0] === "new") await viewForm(null);
+    else if (p[0] === "edit" && p[1]) await viewForm(p[1]);
+    else if (p[0] === "my") await viewMy();
+    else if (p[0] === "admin") await viewAdmin();
+    else await viewList();
+  } catch (e) { app.innerHTML = msg("err", e.message) + `<p><a href="#/">Voltar para os mods</a></p>`; }
+}
+
+(async () => {
+  const hm = /^#session=(.+)$/.exec(location.hash);
+  token = hm ? hm[1] : store.get();
+  if (hm) { store.set(token); history.replaceState(null, "", location.pathname + "#/"); }
+  if (token) { try { me = (await api("/me")).user; if (!me) { token = null; store.set(null); } } catch (e) { me = null; } }
+  renderNav();
+  window.addEventListener("hashchange", route);
+  route();
+})();
+</script>
+</body>
+</html>
