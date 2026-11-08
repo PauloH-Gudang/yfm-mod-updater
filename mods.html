@@ -155,9 +155,177 @@ small{color:var(--sand-dim)}
 .tabs a{color:var(--sand-dim);text-decoration:none;padding:6px 0 10px;border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs a.on,.tabs a:hover{color:var(--sand);border-bottom-color:var(--gold)}
 .center{text-align:center;color:var(--sand-dim);padding:60px 0;font-size:18px}
+.langbtn{margin-left:14px;background:transparent;border:1px solid var(--gold,#c9a24a);color:var(--gold,#c9a24a);border-radius:4px;padding:3px 9px;font:inherit;font-size:.85em;cursor:pointer;letter-spacing:.05em}
+.langbtn:hover{background:rgba(201,162,74,.12)}
+.trbtn{display:block;margin:6px 0 0;background:none;border:0;padding:0;color:var(--sand-dim,#999);font:inherit;font-size:.8em;cursor:pointer;text-decoration:underline dotted}
 </style>
 </head>
 <body>
+<script>
+const I18N = {
+"Mods — FM Recompiled": "Mods — FM Recompiled",
+"Mods": "Mods", "Meus mods": "My mods", "Enviar mod": "Submit mod", "Moderação": "Moderation", "Sair": "Log out",
+"Atualizar/compilar mod": "Update/compile mod", "Entrar com Discord": "Log in with Discord", "Entrar com Discord para comentar": "Log in with Discord to comment",
+"Mods da comunidade": "Community mods",
+"Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.": "Forbidden Memories Recompiled mods made by the community. Every mod is approved by a moderator before it shows up here.",
+"Buscar mods": "Search mods", "Buscar mod ou autor": "Search mod or author", "Todas as versões do jogo": "All game versions",
+"Ordenar": "Sort", "Mais recentes": "Newest", "Mais curtidos": "Most liked", "Mais comentados": "Most commented", "Mais antigos": "Oldest", "Nome (A a Z)": "Name (A to Z)",
+"Carregando mods…": "Loading mods…", "Carregando…": "Loading…",
+"Nenhum mod encontrado.": "No mods found.", "Nenhum mod aprovado ainda. Entre com o Discord e envie o primeiro.": "No approved mods yet. Log in with Discord and submit the first one.",
+"comentário": "comment", "comentários": "comments",
+"Abrir": "Open", "Abrir página do mod": "Open mod page", "Ver": "View", "Baixar": "Download", "Editar": "Edit", "Editar mod": "Edit mod",
+"Apagar": "Delete", "Apagar mod": "Delete mod", "Apagar de vez": "Delete permanently", "Apagar de vez (moderador)": "Delete permanently (moderator)",
+"Restaurar": "Restore", "Restaurar no site": "Restore on site", "Aprovar": "Approve", "Recusar": "Reject", "Remover": "Remove", "Adicionar": "Add",
+"Bloquear autor": "Block author", "bloqueado": "blocked", "Curtir": "Like", "Entre com o Discord para curtir": "Log in with Discord to like",
+"Versão": "Version", "Autor": "Author", "Atualizado": "Updated", "Funciona em": "Works on", "Descrição": "Description", "Comentários": "Comments", "Capa": "Cover",
+"Ordem dos comentários": "Comment order", "Mais antigos primeiro": "Oldest first", "Mais novos primeiro": "Newest first",
+"Nenhum comentário ainda.": "No comments yet.", "Seu comentário": "Your comment", "Comentar": "Comment",
+"Apagar este comentário?": "Delete this comment?",
+"Apagar este mod? Ele some do site para todo mundo, inclusive para você.": "Delete this mod? It disappears from the site for everyone, including you.",
+"Apagar este mod DE VEZ, com imagens, comentários e curtidas? Não dá para desfazer.": "Delete this mod PERMANENTLY, with images, comments and likes? This can't be undone.",
+"Entre com o Discord para curtir. Entrar agora?": "Log in with Discord to like. Log in now?",
+"Entre com o Discord para enviar um mod.": "Log in with Discord to submit a mod.",
+"Este mod foi apagado pelo autor": "This mod was deleted by its author",
+". Ele não aparece mais no site; só moderadores conseguem ver esta página.": ". It no longer shows on the site; only moderators can see this page.",
+"Sua edição está aguardando aprovação. Até lá, todos veem a versão aprovada abaixo.": "Your edit is waiting for approval. Until then, everyone sees the approved version below.",
+"Seu mod está aguardando aprovação. Só você e o moderador conseguem vê-lo.": "Your mod is waiting for approval. Only you and the moderator can see it.",
+"Sua última edição foi recusada": "Your last edit was rejected", "Edite e envie de novo.": "Edit it and send again.",
+"Aguardando aprovação": "Waiting for approval", "Aprovado": "Approved", "Recusado": "Rejected",
+"Nome do mod": "Mod name", "Versão do mod": "Mod version", "Versão do jogo": "Game version",
+"Versões do jogo compatíveis (marque uma ou mais)": "Compatible game versions (check one or more)", "Outra versão (ex.: v0.3.2)": "Other version (e.g. v0.3.2)",
+"Link de download (https://… — Google Drive, Mega, MediaFire, GitHub, etc.)": "Download link (https://… — Google Drive, Mega, MediaFire, GitHub, etc.)",
+"Imagens (até": "Images (up to", "; a primeira é a capa. PNG, JPG, WEBP ou GIF, reduzidas automaticamente)": "; the first one is the cover. PNG, JPG, WEBP or GIF, resized automatically)",
+"Arraste imagens para cá": "Drag images here", ", cole com": ", paste with", "ou clique para escolher": "or click to choose",
+"Mover para a esquerda": "Move left", "Mover para a direita": "Move right",
+"Adicione ao menos uma imagem.": "Add at least one image.", "Marque ao menos uma versão compatível.": "Check at least one compatible version.",
+"escolha um arquivo de imagem": "choose an image file",
+"Enviar para aprovação": "Send for approval", "Enviar edição para aprovação": "Send edit for approval",
+"Seu mod só aparece para todos depois que o moderador aprovar.": "Your mod only shows to everyone after the moderator approves it.",
+"A edição vai para aprovação de novo. Enquanto isso, todos continuam vendo a versão aprovada.": "The edit goes to approval again. Meanwhile, everyone keeps seeing the approved version.",
+"Só o autor pode editar este mod.": "Only the author can edit this mod.", "Só moderadores.": "Moderators only.",
+"Você ainda não enviou nenhum mod.": "You haven't submitted any mods yet.",
+"Mod novo (nenhuma versão aprovada ainda).": "New mod (no approved version yet).", "Versão no ar": "Live version", "Envio novo": "New submission",
+"Motivo da recusa (o autor vê)": "Rejection reason (the author sees it)", "Nada esperando aprovação.": "Nothing waiting for approval.",
+"Envios": "Submissions", "Palavras proibidas": "Banned words", "Apagados": "Deleted", "Armazenamento": "Storage",
+"Nenhum mod apagado pelos autores.": "No mods deleted by authors.", "nunca foi aprovado": "never approved",
+"Mods que os próprios autores apagaram. Eles não aparecem para ninguém além dos moderadores. Você pode devolver ao site ou apagar de vez.": "Mods their own authors deleted. Nobody but moderators can see them. You can put them back on the site or delete them permanently.",
+"Total:": "Total:", "em uso": "in use", "cheio": "full", "principal": "main",
+"Todos os bancos de imagem estão cheios: novos envios com imagem vão falhar.": "All image databases are full: new submissions with images will fail.",
+"Esta é a lista padrão. Ao salvar, ela passa a ser a sua.": "This is the default list. Once you save, it becomes yours.",
+"Uma palavra ou expressão por linha. Termine com": "One word or phrase per line. End with",
+"para pegar qualquer palavra que comece assim (ex.:": "to match any word that starts like that (e.g.",
+"pega \"merda\" e \"merdinha\").": "matches \"merda\" and \"merdinha\").", "Acentos, maiúsculas e trocas como": "Accents, capitals and swaps like",
+"são reconhecidos. Nos comentários a palavra vira asteriscos; em nome, versão ou descrição de mod o envio é recusado.": "are recognized. In comments the word turns into asterisks; in a mod's name, version or description the submission is rejected.",
+"Salvar lista": "Save list", "Voltar para os mods": "Back to mods", "Nada encontrado.": "Nothing found.", "Nada para mostrar ainda.": "Nothing to show yet.",
+"Pré-visualizar": "Preview", "Esconder prévia": "Hide preview", "Spoiler: clique para ver": "Spoiler: click to reveal",
+"Negrito": "Bold", "Itálico": "Italic", "Riscado": "Strikethrough", "Sublinhado": "Underline", "Código": "Code", "Link": "Link", "Lista": "List", "• Lista": "• List", "Citação": "Quote", "Título": "Heading",
+"Emojis": "Emojis", "Buscar emoji": "Search emoji", "Buscar emoji (nome em inglês: fire, skull, joy…)": "Search emoji (fire, skull, joy…)",
+"Emoji personalizado do Discord": "Discord custom emoji", "Cole aqui um emoji do Discord: <:nome:123…>": "Paste a Discord emoji here: <:name:123…>",
+"Emoji do Discord: no Discord digite": "Discord emoji: in Discord type", "e envie; ele mostra o código": "and send it; it shows the code",
+". Copie e cole aqui. Também vale": ". Copy and paste it here. You can also use",
+"Formatação: **negrito**, *itálico*, ~~riscado~~, __sublinhado__, ||spoiler||, `código`, [texto](https://link), linhas com - viram lista, > vira citação, # vira título. Emojis: 😀 no botão, :fire: ou emoji do Discord <:nome:id>.": "Formatting: **bold**, *italic*, ~~strikethrough~~, __underline__, ||spoiler||, `code`, [text](https://link), lines starting with - become a list, > becomes a quote, # becomes a heading. Emojis: 😀 button, :fire: or Discord emoji <:name:id>.",
+"Translated · show original": "Translated · show original",
+// mensagens do servidor
+"JSON inválido": "invalid JSON", "comentário não encontrado": "comment not found", "endereço de retorno inválido": "invalid return address", "endereço de retorno não permitido": "return address not allowed",
+"envie a lista de palavras": "send the word list", "envie ao menos uma imagem do mod": "send at least one mod image", "envie uma imagem do mod": "send a mod image",
+"escolha ao menos uma versão compatível do jogo": "choose at least one compatible game version", "espere alguns segundos antes de comentar de novo": "wait a few seconds before commenting again",
+"essa revisão já foi analisada ou foi substituída": "this revision was already reviewed or replaced", "faça login com o Discord": "log in with Discord",
+"imagem grande demais (máximo 1 MB)": "image too large (max 1 MB)", "imagem inválida (use PNG, JPG, WEBP ou GIF)": "invalid image (use PNG, JPG, WEBP or GIF)", "imagem inválida": "invalid image", "imagem não encontrada": "image not found",
+"link de download inválido": "invalid download link", "login expirado, tente de novo": "login expired, try again", "mod não encontrado": "mod not found",
+"não consegui ler seu perfil do Discord": "couldn't read your Discord profile", "o Discord recusou o login": "Discord refused the login",
+"o armazenamento de imagens está cheio; avise o moderador": "image storage is full; tell the moderator", "o link de download precisa começar com https://": "the download link must start with https://",
+"origem não permitida": "origin not allowed", "palavra longa demais (máximo 60 letras)": "word too long (max 60 letters)", "revisão não encontrada": "revision not found",
+"rota desconhecida": "unknown route", "sem permissão": "no permission", "só moderadores": "moderators only", "só o autor pode editar este mod": "only the author can edit this mod",
+"uma das imagens antigas não existe mais; escolha de novo": "one of the old images no longer exists; choose again", "versões compatíveis demais": "too many compatible versions",
+"Failed to fetch": "Couldn't reach the server",
+};
+
+// ===== idioma (pt / en) =====
+const LOC = () => LANG === "en" ? "en-US" : "pt-BR";
+const LANG = (() => { try { const s = localStorage.getItem("yfmLang"); if (s === "pt" || s === "en") return s; } catch {} return /^pt\b/i.test(navigator.language || "") ? "pt" : "en"; })();
+document.documentElement.lang = LANG === "en" ? "en" : "pt-BR";
+const I18N_RX = [
+  [/^(\d+) comentários?$/, (_, n) => n + (n === "1" ? " comment" : " comments")],
+  [/^Comentários \((\d+)\)$/, "Comments ($1)"],
+  [/^Só cabe mais 1 imagem \(máximo (\d+)\)\.$/, "Only 1 more image fits (max $1)."],
+  [/^Só cabem mais (\d+) imagens \(máximo (\d+)\)\.$/, "Only $1 more images fit (max $2)."],
+  [/^Bloquear (.+)\? Ele não poderá mais enviar mods nem comentar\.$/, "Block $1? They won't be able to submit mods or comment anymore."],
+  [/^apagado em (.+)$/, "deleted on $1"],
+  [/^Banco (\S+)$/, (_, n) => "Database " + (n === "principal" ? "main" : n)],
+  [/^campo "(.+)" é obrigatório$/, 'field "$1" is required'],
+  [/^no máximo (\d+) imagens por mod$/, "at most $1 images per mod"],
+  [/^você já tem (\d+) envios esperando aprovação$/, "you already have $1 submissions waiting for approval"],
+  [/^(.+) tem palavras não permitidas \((.+)\)\. Ajuste o texto e envie de novo\.$/, "$1 contains words that aren't allowed ($2). Fix the text and send again."],
+  [/^resposta inválida do servidor \(HTTP (\d+)\)$/, "invalid server response (HTTP $1)"],
+  [/^Sua última edição foi recusada(.*) Edite e envie de novo\.$/, "Your last edit was rejected$1 Edit it and send again."],
+  [/^Edição:$/, "Edit:"],
+  [/^♥ (\d+) · (\d+) comentários?$/, (_, l, n) => `♥ ${l} · ${n} ${n === "1" ? "comment" : "comments"}`],
+  [/^As imagens dos mods ficam em (\d+) bancos? D1 de (.+?)\. O site grava sempre no primeiro banco abaixo de (\d+)% e passa para o próximo quando ele enche\.$/, (_, n, mb, p) => `Mod images are stored in ${n} D1 ${n === "1" ? "database" : "databases"} of ${mb}. The site always writes to the first database below ${p}% and moves on to the next when it fills up.`],
+  [/^(.+) de (.+) \((.+)%\)$/, "$1 of $2 ($3%)"],
+];
+function tr(s) {
+  if (LANG !== "en" || !s) return s;
+  if (s.includes("\n")) return s.split("\n").map(tr).join("\n");
+  const k = s.trim(); if (!k || !/[A-Za-zÀ-ú]/.test(k)) return s;
+  let v = I18N[k];
+  if (v == null) for (const [r, x] of [...(typeof I18N_RX_PAGE !== "undefined" ? I18N_RX_PAGE : []), ...I18N_RX]) if (r.test(k)) { v = k.replace(r, x); break; }
+  return v == null ? s : s.replace(k, v);
+}
+const I18N_SKIP = "script,style,textarea,code,.md,.d,.notr,.mdprev,input";
+function trNode(root) {
+  if (LANG !== "en") return;
+  if (root.nodeType === 3) { const p = root.parentElement; if (p && !p.closest(I18N_SKIP)) { const v = tr(root.nodeValue); if (v !== root.nodeValue) root.nodeValue = v; } return; }
+  if (root.nodeType !== 1 || root.closest?.("script,style,.md,.d,.notr")) return;
+  const els = [root, ...root.querySelectorAll("[placeholder],[title],[aria-label]")];
+  for (const el of els) for (const a of ["placeholder", "title", "aria-label"]) if (el.hasAttribute?.(a) && !el.closest(".md,.d,.notr")) { const o = el.getAttribute(a), v = tr(o); if (v !== o) el.setAttribute(a, v); }
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) trNode(n);
+  for (const el of root.matches?.(".md,.d") ? [root] : root.querySelectorAll?.(".desc.md,.t.md,.card .d") || []) autoTranslate(el);
+}
+// tradução automática do texto dos usuários (descrições e comentários)
+const TR_CACHE = new Map();
+async function gtrans(text) {
+  if (TR_CACHE.has(text)) return TR_CACHE.get(text);
+  const p = fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=" + encodeURIComponent(text))
+    .then(r => r.json()).then(j => ({ text: (j[0] || []).map(x => x[0]).join(""), from: j[2] }));
+  TR_CACHE.set(text, p); return p;
+}
+async function autoTranslate(el) {
+  if (LANG !== "en" || el.dataset.tr || el.closest(".mdprev")) return;
+  el.dataset.tr = "1";
+  const nodes = []; const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n; (n = w.nextNode());) if (/[A-Za-zÀ-ú]{2}/.test(n.nodeValue) && !n.parentElement.closest("code,pre")) nodes.push(n);
+  if (!nodes.length) return;
+  const SEP = "\n⁂\n", orig = nodes.map(n => n.nodeValue);
+  try {
+    const r = await gtrans(orig.join(SEP).slice(0, 4800));
+    if (!r.text || r.from === "en") return;
+    const parts = r.text.split(/\s*⁂\s*/);
+    if (parts.length !== nodes.length) return;
+    nodes.forEach((n, i) => { const lead = orig[i].match(/^\s*/)[0], tail = orig[i].match(/\s*$/)[0]; n.nodeValue = lead + parts[i].trim() + tail; });
+    if (el.matches(".d")) return;
+    const b = document.createElement("button"); b.type = "button"; b.className = "trbtn notr"; b.textContent = "Translated · show original";
+    let showing = false; const tnow = nodes.map(n => n.nodeValue);
+    b.onclick = () => { showing = !showing; nodes.forEach((n, i) => n.nodeValue = showing ? orig[i] : tnow[i]); b.textContent = showing ? "Original · show translation" : "Translated · show original"; };
+    el.after(b);
+  } catch {}
+}
+if (LANG === "en") {
+  const _a = window.alert.bind(window), _c = window.confirm.bind(window), _p = window.prompt.bind(window);
+  window.alert = m => _a(tr(String(m))); window.confirm = m => _c(tr(String(m))); window.prompt = (m, d) => _p(tr(String(m)), d);
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === "characterData") trNode(m.target); else if (m.type === "attributes") trNode(m.target); else m.addedNodes.forEach(trNode); } })
+    .observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["placeholder", "title", "aria-label"] });
+  document.addEventListener("DOMContentLoaded", () => { document.title = tr(document.title); trNode(document.body); });
+}
+// botão de idioma no topo
+document.addEventListener("DOMContentLoaded", () => {
+  const bar = document.querySelector("header .bar"); if (!bar) return;
+  const b = document.createElement("button"); b.type = "button"; b.className = "langbtn notr";
+  b.textContent = LANG === "en" ? "PT" : "EN"; b.title = LANG === "en" ? "Mudar para português" : "Switch to English";
+  b.onclick = () => { try { localStorage.setItem("yfmLang", LANG === "en" ? "pt" : "en"); } catch {} location.reload(); };
+  bar.appendChild(b);
+});
+</script>
 <header><div class="bar">
 <a class="logo" href="#/">FM <b>Mods</b></a>
 <nav id="nav"></nav>
@@ -172,7 +340,7 @@ const UPDATER = "./";
 let me = null, token = null, versionsCache = null;
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const fmtDate = t => t ? new Date(t).toLocaleDateString("pt-BR", {day:"2-digit", month:"short", year:"numeric"}) : "";
+const fmtDate = t => t ? new Date(t).toLocaleDateString(LOC(), {day:"2-digit", month:"short", year:"numeric"}) : "";
 const STATUS = {pending:"Aguardando aprovação", approved:"Aprovado", rejected:"Recusado"};
 const store = {
   get(){ try{ return localStorage.getItem("yfmModsSession"); }catch(e){ return null; } },
@@ -616,12 +784,12 @@ async function viewAdmin(tab) {
   }
   if (tab === "armazenamento") {
     const st = await api("/admin/storage");
-    const mb = n => (n / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " MB";
+    const mb = n => (n / 1e6).toLocaleString(LOC(), { maximumFractionDigits: 1 }) + " MB";
     const total = st.shards.reduce((a, x) => a + x.size, 0), cap = st.limit * st.shards.length;
     const cur = st.shards.find(x => x.size < st.limit * st.full);
     body(`<div class="card"><p style="margin-top:0;max-width:70ch">As imagens dos mods ficam em ${st.shards.length} ${st.shards.length === 1 ? "banco" : "bancos"} D1 de ${mb(st.limit)}. O site grava sempre no primeiro banco abaixo de ${Math.round(st.full * 100)}% e passa para o próximo quando ele enche.</p>
-      <p><b>Total:</b> ${mb(total)} de ${mb(cap)} (${(total / cap * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)</p>
-      ${st.shards.map(x => { const pct = x.size / st.limit * 100; return `<div style="margin:12px 0"><div class="row" style="justify-content:space-between"><span>Banco ${x.idx || "principal"}${cur && cur.idx === x.idx ? ` <span class="pill">em uso</span>` : ""}${pct >= st.full * 100 ? ` <span class="pill st-rejected">cheio</span>` : ""}</span><small>${mb(x.size)} · ${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</small></div>
+      <p><b>Total:</b> ${mb(total)} de ${mb(cap)} (${(total / cap * 100).toLocaleString(LOC(), { maximumFractionDigits: 1 })}%)</p>
+      ${st.shards.map(x => { const pct = x.size / st.limit * 100; return `<div style="margin:12px 0"><div class="row" style="justify-content:space-between"><span>Banco ${x.idx || "principal"}${cur && cur.idx === x.idx ? ` <span class="pill">em uso</span>` : ""}${pct >= st.full * 100 ? ` <span class="pill st-rejected">cheio</span>` : ""}</span><small>${mb(x.size)} · ${pct.toLocaleString(LOC(), { maximumFractionDigits: 1 })}%</small></div>
         <div style="height:8px;background:var(--basalt);border:1px solid var(--basalt3);border-radius:999px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${Math.min(100, pct)}%;background:${pct >= st.full * 100 ? "var(--err)" : "var(--gold)"}"></div></div></div>`; }).join("")}
       ${cur ? "" : msg("err", "Todos os bancos de imagem estão cheios: novos envios com imagem vão falhar.")}</div>`);
     return;
