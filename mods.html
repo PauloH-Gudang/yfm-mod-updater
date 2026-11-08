@@ -158,7 +158,10 @@ small{color:var(--sand-dim)}
 .langbtn{margin-left:14px;background:transparent;border:1px solid var(--gold,#c9a24a);color:var(--gold,#c9a24a);border-radius:4px;padding:3px 9px;font:inherit;font-size:.85em;cursor:pointer;letter-spacing:.05em}
 .langbtn:hover{background:rgba(201,162,74,.12)}
 .trbtn{display:block;margin:6px 0 0;background:none;border:0;padding:0;color:var(--sand-dim,#999);font:inherit;font-size:.8em;cursor:pointer;text-decoration:underline dotted}
+.rssb{display:inline-block;vertical-align:middle;margin-left:10px;font-size:.45em;font-family:inherit;letter-spacing:.06em;padding:3px 8px 3px 22px;border-radius:4px;background:#e8821e url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%273%27 cy=%2713%27 r=%272%27 fill=%27white%27/%3E%3Cpath d=%27M1 6a9 9 0 0 1 9 9M1 1a14 14 0 0 1 14 14%27 stroke=%27white%27 stroke-width=%272.2%27 fill=%27none%27/%3E%3C/svg%3E") 6px 50%/12px no-repeat;color:#fff;text-decoration:none}
+.rssb:hover{filter:brightness(1.1)}
 </style>
+<link rel="alternate" type="application/rss+xml" title="FM Recompiled — mods" href="https://yfm-mods.ph-523.workers.dev/rss">
 </head>
 <body>
 <script>
@@ -166,7 +169,7 @@ const I18N = {
 "Mods — FM Recompiled": "Mods — FM Recompiled",
 "Mods": "Mods", "Meus mods": "My mods", "Enviar mod": "Submit mod", "Moderação": "Moderation", "Sair": "Log out",
 "Atualizar/compilar mod": "Update/compile mod", "Entrar com Discord": "Log in with Discord", "Entrar com Discord para comentar": "Log in with Discord to comment",
-"Mods da comunidade": "Community mods",
+"Mods da comunidade": "Community mods", "Assine no seu leitor de RSS para saber de mods novos e versões novas": "Subscribe in your RSS reader to hear about new mods and new versions",
 "Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.": "Forbidden Memories Recompiled mods made by the community. Every mod is approved by a moderator before it shows up here.",
 "Buscar mods": "Search mods", "Buscar mod ou autor": "Search mod or author", "Todas as versões do jogo": "All game versions",
 "Ordenar": "Sort", "Mais recentes": "Newest", "Mais curtidos": "Most liked", "Mais comentados": "Most commented", "Mais antigos": "Oldest", "Nome (A a Z)": "Name (A to Z)",
@@ -512,7 +515,7 @@ async function viewList() {
     <span class="d">${emo(esc(plain(m.description)))}</span>
     <span>${pills(m.versions)}</span>
     <span class="by"><span>${author(m.author)}</span><span>♥ ${m.likes || 0} · ${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
-  app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade</h1>
+  app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade <a class="rssb" href="${API}/rss${LANG === "en" ? "?lang=en" : ""}" target="_blank" rel="noopener" title="Assine no seu leitor de RSS para saber de mods novos e versões novas">RSS</a></h1>
     <p>Mods do Forbidden Memories Recompiled feitos pela comunidade. Todos passam pela aprovação do moderador antes de aparecer aqui.</p></div>
     <div class="filters"><input id="q" type="search" placeholder="Buscar mod ou autor" aria-label="Buscar mods">
     <select id="fv" aria-label="Versão do jogo"><option value="">Todas as versões do jogo</option>${[...new Set(mods.flatMap(m => m.versions))].sort().reverse().map(v => `<option>${esc(v)}</option>`).join("")}</select>
