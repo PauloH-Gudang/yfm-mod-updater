@@ -131,7 +131,34 @@ details summary{cursor:pointer;color:var(--gold-hi)}
 </head>
 <body>
 <header class="topbar"><div class="in"><a class="logo" href="mods.html">FM <b>Mods</b></a>
-<nav><a href="mods.html">Mods</a><a class="on" href="./">Atualizar/compilar mod</a></nav></div></header>
+<nav id="nav"><a href="mods.html#/">Mods</a><a class="on" href="./">Atualizar/compilar mod</a></nav></div></header>
+<script>
+// menu igual ao da galeria (mesmo login: a sessão fica guardada no navegador e vale para as duas páginas)
+(() => {
+  const API = "https://yfm-mods.ph-523.workers.dev", G = "mods.html";
+  const KEY = "yfmModsSession";
+  const get = () => { try { return localStorage.getItem(KEY); } catch (e) { return null; } };
+  const set = v => { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch (e) {} };
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const hm = /#session=(.+)$/.exec(location.hash);
+  if (hm) { set(hm[1]); history.replaceState(null, "", location.pathname + location.search); }
+  let token = get(), me = null;
+  const draw = () => {
+    const n = document.getElementById("nav");
+    n.innerHTML = `<a href="${G}#/">Mods</a><a class="on" href="./">Atualizar/compilar mod</a>` + (me
+      ? `<a href="${G}#/new">Enviar mod</a><a href="${G}#/my">Meus mods</a>${me.admin ? `<a href="${G}#/admin">Moderação</a>` : ""}
+         <span class="meta">${me.avatar ? `<img class="av" src="${esc(me.avatar)}" alt="">` : ""} ${esc(me.name)}</span><button class="sec" id="lo">Sair</button>`
+      : `<button class="discord" id="li">Entrar com Discord</button>`);
+    const li = document.getElementById("li"), lo = document.getElementById("lo");
+    if (li) li.onclick = () => { location.href = API + "/auth/login?return=" + encodeURIComponent(location.href.split("#")[0]); };
+    if (lo) lo.onclick = () => { token = null; me = null; set(null); draw(); };
+  };
+  draw();
+  if (token) fetch(API + "/me", { headers: { Authorization: "Bearer " + token } }).then(r => r.json()).then(j => {
+    me = j.user || null; if (!me) { token = null; set(null); } draw();
+  }).catch(() => {});
+})();
+</script>
 <main>
 <div class="top" style="margin-bottom:22px"><div><h1>Atualizar mod antigo</h1>
 <p class="lead">Corrige mods feitos para a <b>v0.3.0</b> (mod API 12) e para a <b>v0.3.1-preview.2</b>, deixando-os prontos para a versão mais atual (mod API 24). A correção roda no seu navegador; só o botão de compilar envia o mod para o servidor de build.</p></div></div>
