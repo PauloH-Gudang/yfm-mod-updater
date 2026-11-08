@@ -228,22 +228,24 @@ async function viewMod(id) {
       : l.status === "rejected" ? msg("err", "Sua última edição foi recusada" + (l.reason ? ": " + l.reason : ".") + " Edite e envie de novo.") : "";
   }
   const show = a || l;
+  if (m.deleted) notice = `<div class="msg err"><b>Este mod foi apagado pelo autor</b> em ${fmtDate(m.deleted)}. Ele não aparece mais no site; só moderadores conseguem ver esta página.
+    <div class="row" style="margin-top:10px"><button id="restore">Restaurar no site</button><button class="danger" id="hard">Apagar de vez</button></div></div>`;
   app.innerHTML = notice + `<div class="card hero"><div class="art"><img id="img" alt="">${(show.images || []).length > 1 ? `<div class="gal" id="gal">${show.images.map((u, i) => `<button type="button" data-i="${i}" class="${i ? "" : "on"}" aria-label="Imagem ${i + 1}"><img data-g="${esc(u)}" alt=""></button>`).join("")}</div>` : ""}</div><div>
     <h1>${esc(show.name)}</h1>${a ? "" : statusPill(show.status)}
     <dl class="facts"><dt>Versão</dt><dd>${esc(show.version)}</dd><dt>Autor</dt><dd>${author(m.author)}</dd>
     <dt>Atualizado</dt><dd>${fmtDate(show.reviewed || show.created)}</dd><dt>Funciona em</dt><dd>${pills(show.versions)}</dd></dl>
     <div class="row"><a class="btn dl" href="${esc(show.link)}" target="_blank" rel="noopener noreferrer nofollow">Baixar</a>
     <small>${esc(new URL(show.link).hostname)}</small>
-    ${a ? `<button class="like${m.liked ? " on" : ""}" id="like" aria-pressed="${m.liked ? "true" : "false"}" title="${me ? "Curtir" : "Entre com o Discord para curtir"}"><span class="h">${m.liked ? "♥" : "♡"}</span><span id="nlike">${m.likes || 0}</span></button>` : ""}</div>
-    ${m.mine ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a><button class="danger" id="del">Apagar mod</button></div>` : ""}
-    ${me && me.admin && !m.mine ? `<div class="row" style="margin-top:14px"><button class="danger" id="del">Apagar mod (moderador)</button></div>` : ""}
+    ${a && !m.deleted ? `<button class="like${m.liked ? " on" : ""}" id="like" aria-pressed="${m.liked ? "true" : "false"}" title="${me ? "Curtir" : "Entre com o Discord para curtir"}"><span class="h">${m.liked ? "♥" : "♡"}</span><span id="nlike">${m.likes || 0}</span></button>` : ""}</div>
+    ${m.mine && !m.deleted ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a>${me.admin ? "" : `<button class="danger" id="del">Apagar mod</button>`}</div>` : ""}
+    ${me && me.admin && !m.deleted ? `<div class="row" style="margin-top:14px"><button class="danger" id="hard">Apagar de vez (moderador)</button></div>` : ""}
     </div></div>
     <div class="card"><h2>Descrição</h2><div class="desc">${esc(show.description)}</div></div>
     ${a ? `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Comentários (${m.comments.length})</h2>
     ${m.comments.length > 1 ? `<select id="corder" aria-label="Ordem dos comentários" style="width:auto"><option value="old">Mais antigos primeiro</option><option value="new">Mais novos primeiro</option></select>` : ""}</div>
     <div id="coms"></div><div id="cform"></div></div>` : ""}`;
   const img = document.getElementById("img");
-  const setImg = (el, u) => { if (a) el.src = u; else authImg(el, u); };
+  const setImg = (el, u) => { if (a && !m.deleted) el.src = u; else authImg(el, u); };
   setImg(img, show.image);
   const gal = document.getElementById("gal");
   if (gal) {
@@ -255,8 +257,17 @@ async function viewMod(id) {
   }
   const del = document.getElementById("del");
   if (del) del.onclick = async () => {
-    if (!confirm("Apagar este mod e todos os comentários? Não dá para desfazer.")) return;
-    try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = m.mine ? "#/my" : "#/"; } catch (e) { alert(e.message); }
+    if (!confirm("Apagar este mod? Ele some do site para todo mundo, inclusive para você.")) return;
+    try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = "#/my"; } catch (e) { alert(e.message); }
+  };
+  const hard = document.getElementById("hard");
+  if (hard) hard.onclick = async () => {
+    if (!confirm("Apagar este mod DE VEZ, com imagens, comentários e curtidas? Não dá para desfazer.")) return;
+    try { await api("/mods/" + m.id, { method: "DELETE" }); location.hash = m.deleted ? "#/admin/apagados" : "#/"; } catch (e) { alert(e.message); }
+  };
+  const restore = document.getElementById("restore");
+  if (restore) restore.onclick = async () => {
+    try { await api(`/admin/mods/${m.id}/restore`, { method: "POST", body: {} }); viewMod(id); } catch (e) { alert(e.message); }
   };
   const likeB = document.getElementById("like");
   if (likeB) likeB.onclick = async () => {
@@ -286,6 +297,7 @@ async function viewMod(id) {
   if (corder) corder.onchange = () => { try { localStorage.setItem("yfmComOrder", corder.value); } catch (e) {} drawComs(); };
   drawComs();
   const cf = document.getElementById("cform");
+  if (m.deleted) return;
   if (!me) { cf.innerHTML = `<div class="row" style="margin-top:10px"><button class="discord" id="li2">Entrar com Discord para comentar</button></div>`; document.getElementById("li2").onclick = login; return; }
   cf.innerHTML = `<label class="f">Seu comentário</label><textarea id="ct" maxlength="1000" style="min-height:80px"></textarea>
     <div class="row" style="margin-top:8px"><button id="cs">Comentar</button><span id="ce"></span></div>`;
@@ -417,7 +429,7 @@ async function viewMy() {
 async function viewAdmin(tab) {
   if (!me || !me.admin) { app.innerHTML = msg("err", "Só moderadores."); return; }
   tab = tab || "envios";
-  const tabs = [["envios", "Envios"], ["comentarios", "Comentários"], ["palavras", "Palavras proibidas"], ["armazenamento", "Armazenamento"]];
+  const tabs = [["envios", "Envios"], ["comentarios", "Comentários"], ["palavras", "Palavras proibidas"], ["apagados", "Apagados"], ["armazenamento", "Armazenamento"]];
   const head = `<h1>Moderação</h1><div class="tabs" role="tablist">${tabs.map(([k, l]) => `<a role="tab" href="#/admin/${k}" class="${k === tab ? "on" : ""}" aria-selected="${k === tab}">${l}</a>`).join("")}</div>`;
   app.innerHTML = head + `<p class="center">Carregando…</p>`;
   const body = c => { app.innerHTML = head + c; };
@@ -433,6 +445,23 @@ async function viewAdmin(tab) {
       el.querySelector("[data-del]").onclick = async () => { try { await api("/comments/" + c.id, { method: "DELETE" }); el.remove(); } catch (e) { alert(e.message); } };
       const bb = el.querySelector("[data-ban]");
       if (bb) bb.onclick = async () => { if (!confirm(`Bloquear ${c.user.name}? Ele não poderá mais enviar mods nem comentar.`)) return; try { await api(`/admin/users/${c.user.id}/ban`, { method: "POST", body: {} }); viewAdmin("comentarios"); } catch (e) { alert(e.message); } };
+    });
+    return;
+  }
+  if (tab === "apagados") {
+    const { mods } = await api("/admin/deleted");
+    body(`<p style="color:var(--sand-dim);max-width:70ch;margin-top:0">Mods que os próprios autores apagaram. Eles não aparecem para ninguém além dos moderadores. Você pode devolver ao site ou apagar de vez.</p>` +
+      (mods.length ? mods.map(x => `<div class="card row" data-m="${x.id}" style="align-items:flex-start">
+        ${x.rev && x.rev.image ? `<img data-src="${esc(x.rev.image)}" style="width:128px;aspect-ratio:16/10;object-fit:cover;border:1px solid var(--gold-dim);border-radius:3px;background:#000" alt="">` : ""}
+        <div style="flex:1;min-width:200px"><h2 style="margin:0 0 4px">${esc(x.rev ? x.rev.name : "Mod #" + x.id)}</h2>
+        <div class="meta">${author(x.author)} <span>apagado em ${fmtDate(x.deleted)}</span>${x.wasPublic ? "" : ` <span class="pill">nunca foi aprovado</span>`}</div></div>
+        <div class="row"><a class="btn sec" href="#/mod/${x.id}">Abrir</a><button data-restore>Restaurar</button><button class="danger" data-hard>Apagar de vez</button></div></div>`).join("")
+      : `<div class="card center">Nenhum mod apagado pelos autores.</div>`));
+    app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
+    app.querySelectorAll("[data-m]").forEach(card => {
+      const id = card.dataset.m;
+      card.querySelector("[data-restore]").onclick = async () => { try { await api(`/admin/mods/${id}/restore`, { method: "POST", body: {} }); card.remove(); } catch (e) { alert(e.message); } };
+      card.querySelector("[data-hard]").onclick = async () => { if (!confirm("Apagar este mod DE VEZ, com imagens, comentários e curtidas? Não dá para desfazer.")) return; try { await api("/mods/" + id, { method: "DELETE" }); card.remove(); } catch (e) { alert(e.message); } };
     });
     return;
   }
@@ -470,7 +499,7 @@ async function viewAdmin(tab) {
     <div class="meta" style="margin-bottom:10px">${author(p.author)} <small>Discord ${esc(p.author.id)}</small> <span>${fmtDate(p.pending.created)}</span> <a href="#/mod/${p.id}">Abrir página do mod</a></div>
     <div class="cmp">${side(p.pending, "Envio novo")}${side(p.current, "Versão no ar")}</div>
     <div class="row" style="margin-top:14px"><button data-ok>Aprovar</button><input data-reason placeholder="Motivo da recusa (o autor vê)" style="max-width:360px"><button class="danger" data-no>Recusar</button>
-    <button class="sec" data-ban style="margin-left:auto">Bloquear autor</button></div></div>`).join("")
+    <button class="sec" data-ban style="margin-left:auto">Bloquear autor</button><button class="danger" data-hard>Apagar mod</button></div></div>`).join("")
     : `<div class="card center">Nada esperando aprovação.</div>`);
   app.querySelectorAll("img[data-src]").forEach(i => authImg(i, i.dataset.src));
   app.querySelectorAll("[data-rev]").forEach(card => {
@@ -479,6 +508,7 @@ async function viewAdmin(tab) {
     card.querySelector("[data-ok]").onclick = () => act(`/admin/revisions/${rev}/approve`);
     card.querySelector("[data-no]").onclick = () => act(`/admin/revisions/${rev}/reject`, { reason: card.querySelector("[data-reason]").value });
     card.querySelector("[data-ban]").onclick = () => { if (confirm(`Bloquear ${p.author.name}? Ele não poderá mais enviar mods nem comentar.`)) act(`/admin/users/${p.author.id}/ban`); };
+    card.querySelector("[data-hard]").onclick = async () => { if (!confirm("Apagar este mod DE VEZ, com imagens, comentários e curtidas? Não dá para desfazer.")) return; try { await api("/mods/" + p.id, { method: "DELETE" }); viewAdmin("envios"); } catch (e) { alert(e.message); } };
   });
 }
 
