@@ -280,7 +280,7 @@ function trNode(root) {
   for (const el of els) for (const a of ["placeholder", "title", "aria-label"]) if (el.hasAttribute?.(a) && !el.closest(".md,.d,.notr")) { const o = el.getAttribute(a), v = tr(o); if (v !== o) el.setAttribute(a, v); }
   const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let n; (n = w.nextNode());) trNode(n);
-  for (const el of root.matches?.(".md,.d") ? [root] : root.querySelectorAll?.(".desc.md,.t.md,.card .d") || []) autoTranslate(el);
+  for (const el of root.matches?.(".md,.d") ? [root] : root.querySelectorAll?.(".desc.md,.t.md,span.d") || []) autoTranslate(el);
 }
 // tradução automática do texto dos usuários (descrições e comentários)
 const TR_CACHE = new Map();
