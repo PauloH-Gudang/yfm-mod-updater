@@ -95,7 +95,25 @@ label.f{display:block;margin:18px 0 6px;color:var(--sand-dim);font-size:15px}
 .hero .art img{width:100%;display:block;border:1px solid var(--gold-dim);border-radius:3px;background:#000}
 .facts{margin:6px 0 22px;display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:16px}
 .facts dt{color:var(--sand-dim)}.facts dd{margin:0}
-.desc{white-space:pre-wrap;word-wrap:break-word;max-width:70ch}
+.desc{word-wrap:break-word;max-width:70ch}
+.md>*:first-child{margin-top:0}.md>*:last-child{margin-bottom:0}
+.md p{margin:0 0 .7em}
+.md h3,.md h4,.md h5{font-family:var(--disp);font-weight:400;color:var(--gold-hi);margin:1em 0 .4em;line-height:1.2}
+.md h3{font-size:24px}.md h4{font-size:20px}.md h5{font-size:17px;letter-spacing:.03em}
+.md ul,.md ol{margin:0 0 .7em;padding-left:1.4em}.md li{margin:.15em 0}
+.md blockquote{margin:0 0 .7em;padding:2px 0 2px 12px;border-left:3px solid var(--gold-dim);color:var(--sand-dim)}
+.md code{background:var(--basalt);border:1px solid var(--basalt3);padding:0 5px;border-radius:3px;font-family:ui-monospace,Consolas,monospace;font-size:.88em}
+.md pre{background:var(--basalt);border:1px solid var(--basalt3);border-radius:3px;padding:10px 12px;overflow:auto;margin:0 0 .7em}
+.md pre code{border:0;padding:0;background:none}
+.md a{color:var(--gold-hi)}
+.md .spoiler{background:var(--sand-dim);color:transparent;border-radius:3px;cursor:pointer;transition:all .15s}
+.md .spoiler.on{background:var(--basalt3);color:inherit}
+.mdbar{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 6px}
+.mdbar button{padding:3px 9px;font-size:14px;min-width:34px;background:transparent;color:var(--sand);border-color:var(--basalt3)}
+.mdbar button:hover{border-color:var(--gold)}
+.mdbar .pv{margin-left:auto}
+.mdprev{border:1px dashed var(--basalt3);border-radius:3px;padding:10px 12px;margin-top:6px;background:var(--basalt)}
+.mdhelp{font-size:13px;color:var(--sand-dim);margin-top:4px}
 .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
 .msg{padding:12px 16px;border-left:3px solid;border-radius:2px;margin-bottom:20px;background:var(--basalt2)}
 .msg.err{border-color:var(--err)}.msg.ok{border-color:var(--ok)}.msg.warn{border-color:var(--gold)}
@@ -104,7 +122,7 @@ label.f{display:block;margin:18px 0 6px;color:var(--sand-dim);font-size:15px}
 .chk label:has(input:checked){border-color:var(--faience);color:var(--faience)}
 .chk input{width:auto;accent-color:var(--faience)}
 .com{border-top:1px solid var(--basalt3);padding:14px 0}.com:first-child{border-top:0}
-.com .t{white-space:pre-wrap;word-wrap:break-word;margin-top:4px;max-width:70ch}
+.com .t{word-wrap:break-word;margin-top:4px;max-width:70ch}
 .preview{max-width:340px;border:1px solid var(--gold-dim);border-radius:3px;margin-top:10px;display:block}
 .drop{border:1px dashed var(--gold-dim);border-radius:4px;padding:18px;text-align:center;color:var(--sand-dim);cursor:pointer;background:var(--basalt);transition:border-color .15s,background .15s}
 .drop:hover,.drop.over{border-color:var(--gold-hi);background:rgba(201,162,78,.08);color:var(--sand)}
@@ -173,6 +191,75 @@ function author(a) { return a ? `${a.avatar ? `<img class="av" src="${esc(a.avat
 function pills(vs) { return (vs || []).map(v => `<span class="pill">${esc(v)}</span>`).join(" "); }
 function statusPill(s) { return `<span class="pill st-${esc(s)}">${esc(STATUS[s] || s)}</span>`; }
 
+// ---------- formatação (Markdown simples, igual ao Discord) ----------
+// Tudo é escapado antes; só gera tags conhecidas e links http(s). Nada de HTML vindo do usuário.
+function md(src) {
+  let t = String(src ?? "").replace(/(^|[^\p{L}\p{N}*])(\p{L})(\*{2,})(?![\p{L}\p{N}*])/gu, (_, p, a, s) => p + a + "∗".repeat(s.length)); // palavrão censurado (p****) não vira negrito
+  const keep = []; const ph = h => "\u0000" + (keep.push(h) - 1) + "\u0000";
+  t = esc(t).replace(/\r\n?/g, "\n");
+  t = t.replace(/```[^\n]*\n?([\s\S]*?)```/g, (_, c) => ph(`<pre><code>${c.replace(/\n$/, "")}</code></pre>`));
+  t = t.replace(/`([^`\n]+)`/g, (_, c) => ph(`<code>${c}</code>`));
+  const link = (u, label) => `<a href="${u}" target="_blank" rel="noopener nofollow ugc">${label}</a>`;
+  t = t.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, (_, l, u) => ph(link(u, l)));
+  t = t.replace(/(^|[\s(])(https?:\/\/[^\s<]+[^\s<.,;:!?)\]])/g, (_, p, u) => p + ph(link(u, u)));
+  const inline = x => x
+    .replace(/\*\*([^*\n]+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_\n]+?)__/g, "<u>$1</u>")
+    .replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, "$1<em>$2</em>")
+    .replace(/(^|[^_\w])_([^_\n]+?)_(?![_\w])/g, "$1<em>$2</em>")
+    .replace(/~~([^~\n]+?)~~/g, "<s>$1</s>")
+    .replace(/\|\|([^|\n]+?)\|\|/g, `<span class="spoiler" title="Spoiler: clique para ver">$1</span>`);
+  const out = []; let para = [], list = null;
+  const flushP = () => { if (para.length) { out.push(`<p>${para.map(inline).join("<br>")}</p>`); para = []; } };
+  const flushL = () => { if (list) { out.push(`<${list.t}>${list.items.map(i => `<li>${inline(i)}</li>`).join("")}</${list.t}>`); list = null; } };
+  let quote = [];
+  const flushQ = () => { if (quote.length) { out.push(`<blockquote>${quote.map(inline).join("<br>")}</blockquote>`); quote = []; } };
+  for (const line of t.split("\n")) {
+    let m;
+    if (/^\s*$/.test(line)) { flushP(); flushL(); flushQ(); continue; }
+    if ((m = /^(#{1,3})\s+(.+)$/.exec(line))) { flushP(); flushL(); flushQ(); const n = m[1].length + 2; out.push(`<h${n}>${inline(m[2])}</h${n}>`); continue; }
+    if ((m = /^&gt;\s?(.*)$/.exec(line))) { flushP(); flushL(); quote.push(m[1]); continue; }
+    if ((m = /^\s*[-*•]\s+(.+)$/.exec(line))) { flushP(); flushQ(); if (!list || list.t !== "ul") { flushL(); list = { t: "ul", items: [] }; } list.items.push(m[1]); continue; }
+    if ((m = /^\s*\d+[.)]\s+(.+)$/.exec(line))) { flushP(); flushQ(); if (!list || list.t !== "ol") { flushL(); list = { t: "ol", items: [] }; } list.items.push(m[1]); continue; }
+    flushL(); flushQ(); para.push(line);
+  }
+  flushP(); flushL(); flushQ();
+  return out.join("").replace(/\u0000(\d+)\u0000/g, (_, i) => keep[+i]);
+}
+// texto sem marcações, para o resumo dos cards
+function plain(src) {
+  return String(src ?? "").replace(/```[\s\S]*?```/g, " ").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/(\*\*|__|~~|\|\||`)/g, "").replace(/^\s*(#{1,3}|>|[-*•]|\d+[.)])\s+/gm, "").replace(/\s+/g, " ").trim();
+}
+// barra de formatação + pré-visualização para um <textarea>
+function mdTools(id) {
+  const ta = document.getElementById(id);
+  const bar = document.createElement("div"); bar.className = "mdbar";
+  const B = [["<b>B</b>", "Negrito", "**", "**"], ["<i>I</i>", "Itálico", "*", "*"], ["<s>S</s>", "Riscado", "~~", "~~"], ["<u>U</u>", "Sublinhado", "__", "__"],
+    ["▒", "Spoiler", "||", "||"], ["&lt;/&gt;", "Código", "`", "`"], ["🔗", "Link", "[", "](https://)"], ["• Lista", "Lista", "- ", ""], ["❝", "Citação", "> ", ""], ["H", "Título", "## ", ""]];
+  bar.innerHTML = B.map((b, i) => `<button type="button" data-i="${i}" title="${b[1]}" aria-label="${b[1]}">${b[0]}</button>`).join("") + `<button type="button" class="pv" aria-pressed="false">Pré-visualizar</button>`;
+  const prev = document.createElement("div"); prev.className = "mdprev md"; prev.hidden = true;
+  const help = document.createElement("div"); help.className = "mdhelp"; help.innerHTML = "Formatação: **negrito**, *itálico*, ~~riscado~~, __sublinhado__, ||spoiler||, `código`, [texto](https://link), linhas com - viram lista, &gt; vira citação, # vira título.";
+  ta.before(bar); ta.after(help); help.after(prev);
+  const wrap = (a, b) => {
+    const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, sel = v.slice(s, e);
+    if (!b) { // prefixo de linha
+      const ls = v.lastIndexOf("\n", s - 1) + 1, block = v.slice(ls, e) || "";
+      const nb = (block || "").split("\n").map(l => a + l).join("\n");
+      ta.setRangeText(nb, ls, e, "end");
+    } else { ta.setRangeText(a + (sel || (a === "[" ? "texto" : "")) + b, s, e, "end"); if (!sel && a !== "[") ta.setSelectionRange(s + a.length, s + a.length); }
+    ta.focus(); ta.dispatchEvent(new Event("input"));
+  };
+  bar.querySelectorAll("[data-i]").forEach(btn => btn.onclick = () => { const b = B[+btn.dataset.i]; wrap(b[2], b[3]); });
+  const pv = bar.querySelector(".pv");
+  const draw = () => { prev.innerHTML = ta.value.trim() ? md(ta.value) : `<span style="color:var(--sand-dim)">Nada para mostrar ainda.</span>`; };
+  pv.onclick = () => { prev.hidden = !prev.hidden; pv.setAttribute("aria-pressed", String(!prev.hidden)); pv.textContent = prev.hidden ? "Pré-visualizar" : "Esconder prévia"; draw(); };
+  ta.addEventListener("input", () => { if (!prev.hidden) draw(); });
+  ta.addEventListener("keydown", e => { if (!(e.ctrlKey || e.metaKey)) return; const k = e.key.toLowerCase(); const map = { b: 0, i: 1 }; if (k in map) { e.preventDefault(); wrap(B[map[k]][2], B[map[k]][3]); } });
+}
+// spoiler: clique revela
+document.addEventListener("click", e => { const s = e.target.closest && e.target.closest(".md .spoiler"); if (s) s.classList.toggle("on"); });
+
 function login() { location.href = API + "/auth/login?return=" + encodeURIComponent(location.href.split("#")[0] + "#/"); }
 function logout() { token = null; me = null; store.set(null); renderNav(); location.hash = "#/"; }
 
@@ -196,7 +283,7 @@ async function viewList() {
   const tile = m => `<a class="tile" href="#/mod/${m.id}">
     <span class="art"><img loading="lazy" src="${esc(m.image)}" alt=""></span>
     <span class="box"><span class="n"><span>${esc(m.name)}</span><small>v${esc(m.version)}</small></span>
-    <span class="d">${esc(m.description)}</span>
+    <span class="d">${esc(plain(m.description))}</span>
     <span>${pills(m.versions)}</span>
     <span class="by"><span>${author(m.author)}</span><span>♥ ${m.likes || 0} · ${m.comments} ${m.comments === 1 ? "comentário" : "comentários"}</span></span></span></a>`;
   app.innerHTML = `<div class="card top"><div><h1>Mods da comunidade</h1>
@@ -242,7 +329,7 @@ async function viewMod(id) {
     ${m.mine && !m.deleted ? `<div class="row" style="margin-top:14px"><a class="btn sec" href="#/edit/${m.id}">Editar</a>${me.admin ? "" : `<button class="danger" id="del">Apagar mod</button>`}</div>` : ""}
     ${me && me.admin && !m.deleted ? `<div class="row" style="margin-top:14px"><button class="danger" id="hard">Apagar de vez (moderador)</button></div>` : ""}
     </div></div>
-    <div class="card"><h2>Descrição</h2><div class="desc">${esc(show.description)}</div></div>
+    <div class="card"><h2>Descrição</h2><div class="desc md">${md(show.description)}</div></div>
     ${a ? `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h2 style="margin:0">Comentários (${m.comments.length})</h2>
     ${m.comments.length > 1 ? `<select id="corder" aria-label="Ordem dos comentários" style="width:auto"><option value="old">Mais antigos primeiro</option><option value="new">Mais novos primeiro</option></select>` : ""}</div>
     <div id="coms"></div><div id="cform"></div></div>` : ""}`;
@@ -290,7 +377,7 @@ async function viewMod(id) {
     const list = corder && corder.value === "new" ? [...m.comments].reverse() : m.comments;
     coms.innerHTML = list.length ? list.map(c => `<div class="com"><div class="meta">${author(c.user)} <span>${fmtDate(c.created)}</span>
       ${c.canDelete ? `<button class="sec" data-del="${c.id}" style="padding:3px 10px;font-size:13px;margin-left:auto">Apagar</button>` : ""}</div>
-      <div class="t">${esc(c.text)}</div></div>`).join("") : `<p style="color:var(--sand-dim)">Nenhum comentário ainda.</p>`;
+      <div class="t md">${md(c.text)}</div></div>`).join("") : `<p style="color:var(--sand-dim)">Nenhum comentário ainda.</p>`;
     coms.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
       if (!confirm("Apagar este comentário?")) return;
       try { await api("/comments/" + b.dataset.del, { method: "DELETE" }); viewMod(id); } catch (e) { alert(e.message); }
@@ -303,6 +390,7 @@ async function viewMod(id) {
   if (!me) { cf.innerHTML = `<div class="row" style="margin-top:10px"><button class="discord" id="li2">Entrar com Discord para comentar</button></div>`; document.getElementById("li2").onclick = login; return; }
   cf.innerHTML = `<label class="f">Seu comentário</label><textarea id="ct" maxlength="1000" style="min-height:80px"></textarea>
     <div class="row" style="margin-top:8px"><button id="cs">Comentar</button><span id="ce"></span></div>`;
+  mdTools("ct");
   document.getElementById("cs").onclick = async () => {
     const t = document.getElementById("ct").value.trim(); if (!t) return;
     const b = document.getElementById("cs"); b.disabled = true;
@@ -350,6 +438,7 @@ async function viewForm(editId) {
     <input id="flink" type="url" required placeholder="https://" value="${esc(cur?.link)}">
     <div class="row" style="margin-top:16px"><button id="fsend">${editId ? "Enviar edição para aprovação" : "Enviar para aprovação"}</button><span id="ferr"></span></div>
     </form></div>`;
+  mdTools("fdesc");
   // cada item: { val: data URL nova ou endereço de imagem que o mod já tinha }
   const imgs = (cur ? (cur.images && cur.images.length ? cur.images : [cur.image]) : []).filter(Boolean).map(u => ({ val: u, old: true }));
   const thumbs = document.getElementById("thumbs"), imgerr = document.getElementById("imgerr"), fimg = document.getElementById("fimg"), drop = document.getElementById("drop");
@@ -441,7 +530,7 @@ async function viewAdmin(tab) {
       <span>em <a href="#/mod/${c.mod.id}">${esc(c.mod.name)}</a></span><span>${fmtDate(c.created)}</span>
       <span class="row" style="margin-left:auto;gap:6px"><button class="danger" data-del style="padding:3px 10px;font-size:13px">Apagar</button>
       ${c.user.banned ? "" : `<button class="sec" data-ban style="padding:3px 10px;font-size:13px">Bloquear autor</button>`}</span></div>
-      <div class="t">${esc(c.text)}</div></div>`).join("")}</div>` : `<div class="card center">Nenhum comentário ainda.</div>`);
+      <div class="t md">${md(c.text)}</div></div>`).join("")}</div>` : `<div class="card center">Nenhum comentário ainda.</div>`);
     app.querySelectorAll("[data-c]").forEach(el => {
       const c = comments.find(x => String(x.id) === el.dataset.c);
       el.querySelector("[data-del]").onclick = async () => { try { await api("/comments/" + c.id, { method: "DELETE" }); el.remove(); } catch (e) { alert(e.message); } };
@@ -496,7 +585,7 @@ async function viewAdmin(tab) {
   const { pending } = await api("/admin/pending");
   const side = (r, title) => r ? `<div><h2>${title}</h2><img data-src="${esc(r.image)}" alt="">${(r.images || []).length > 1 ? `<div class="gal">${r.images.slice(1).map(u => `<img data-src="${esc(u)}" alt="" style="width:110px">`).join("")}</div>` : ""}<p><b>${esc(r.name)}</b> v${esc(r.version)}</p>
     <div>${pills(r.versions)}</div><p><a href="${esc(r.link)}" target="_blank" rel="noopener noreferrer nofollow">${esc(r.link)}</a></p>
-    <div class="desc" style="max-height:260px;overflow:auto;border:1px solid var(--basalt3);border-radius:3px;padding:10px">${esc(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--sand-dim)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
+    <div class="desc md" style="max-height:260px;overflow:auto;border:1px solid var(--basalt3);border-radius:3px;padding:10px">${md(r.description)}</div></div>` : `<div><h2>${title}</h2><p style="color:var(--sand-dim)">Mod novo (nenhuma versão aprovada ainda).</p></div>`;
   body(pending.length ? pending.map(p => `<div class="card" data-rev="${p.pending.rev}">
     <div class="meta" style="margin-bottom:10px">${author(p.author)} <small>Discord ${esc(p.author.id)}</small> <span>${fmtDate(p.pending.created)}</span> <a href="#/mod/${p.id}">Abrir página do mod</a></div>
     <div class="cmp">${side(p.pending, "Envio novo")}${side(p.current, "Versão no ar")}</div>
