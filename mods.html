@@ -417,7 +417,7 @@ async function viewMy() {
 async function viewAdmin(tab) {
   if (!me || !me.admin) { app.innerHTML = msg("err", "Só moderadores."); return; }
   tab = tab || "envios";
-  const tabs = [["envios", "Envios"], ["comentarios", "Comentários"], ["palavras", "Palavras proibidas"]];
+  const tabs = [["envios", "Envios"], ["comentarios", "Comentários"], ["palavras", "Palavras proibidas"], ["armazenamento", "Armazenamento"]];
   const head = `<h1>Moderação</h1><div class="tabs" role="tablist">${tabs.map(([k, l]) => `<a role="tab" href="#/admin/${k}" class="${k === tab ? "on" : ""}" aria-selected="${k === tab}">${l}</a>`).join("")}</div>`;
   app.innerHTML = head + `<p class="center">Carregando…</p>`;
   const body = c => { app.innerHTML = head + c; };
@@ -434,6 +434,18 @@ async function viewAdmin(tab) {
       const bb = el.querySelector("[data-ban]");
       if (bb) bb.onclick = async () => { if (!confirm(`Bloquear ${c.user.name}? Ele não poderá mais enviar mods nem comentar.`)) return; try { await api(`/admin/users/${c.user.id}/ban`, { method: "POST", body: {} }); viewAdmin("comentarios"); } catch (e) { alert(e.message); } };
     });
+    return;
+  }
+  if (tab === "armazenamento") {
+    const st = await api("/admin/storage");
+    const mb = n => (n / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " MB";
+    const total = st.shards.reduce((a, x) => a + x.size, 0), cap = st.limit * st.shards.length;
+    const cur = st.shards.find(x => x.size < st.limit * st.full);
+    body(`<div class="card"><p style="margin-top:0;max-width:70ch">As imagens dos mods ficam em ${st.shards.length} ${st.shards.length === 1 ? "banco" : "bancos"} D1 de ${mb(st.limit)}. O site grava sempre no primeiro banco abaixo de ${Math.round(st.full * 100)}% e passa para o próximo quando ele enche.</p>
+      <p><b>Total:</b> ${mb(total)} de ${mb(cap)} (${(total / cap * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)</p>
+      ${st.shards.map(x => { const pct = x.size / st.limit * 100; return `<div style="margin:12px 0"><div class="row" style="justify-content:space-between"><span>Banco ${x.idx || "principal"}${cur && cur.idx === x.idx ? ` <span class="pill">em uso</span>` : ""}${pct >= st.full * 100 ? ` <span class="pill st-rejected">cheio</span>` : ""}</span><small>${mb(x.size)} · ${pct.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</small></div>
+        <div style="height:8px;background:var(--basalt);border:1px solid var(--basalt3);border-radius:999px;overflow:hidden;margin-top:5px"><div style="height:100%;width:${Math.min(100, pct)}%;background:${pct >= st.full * 100 ? "var(--err)" : "var(--gold)"}"></div></div></div>`; }).join("")}
+      ${cur ? "" : msg("err", "Todos os bancos de imagem estão cheios: novos envios com imagem vão falhar.")}</div>`);
     return;
   }
   if (tab === "palavras") {
