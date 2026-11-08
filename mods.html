@@ -354,7 +354,7 @@ async function viewForm(editId) {
     if (!files.length) { imgerr.textContent = "Nenhuma imagem encontrada."; return; }
     imgerr.textContent = "";
     const room = MAX_IMGS - imgs.length;
-    if (files.length > room) imgerr.textContent = `Só cabem mais ${room} ${room === 1 ? "imagem" : "imagens"} (máximo ${MAX_IMGS}).`;
+    if (files.length > room) imgerr.textContent = room === 1 ? `Só cabe mais 1 imagem (máximo ${MAX_IMGS}).` : `Só cabem mais ${room} imagens (máximo ${MAX_IMGS}).`;
     for (const f of files.slice(0, Math.max(0, room))) {
       try { imgs.push({ val: await loadImage(f) }); drawThumbs(); }
       catch (err) { imgerr.textContent = (f.name ? f.name + ": " : "") + err.message; }
